@@ -1,0 +1,53 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 1331 >>
+stream
+BT /F2 20 Tf 50 790 Td (Fingerpicking Pattern - Practice) Tj ET
+BT /F1 11 Tf 50 756 Td (Pattern: T-1-2-3 \(thumb on bass, fingers on G-B-e\)   Tempo: 70 bpm) Tj ET
+BT /F1 11 Tf 50 739 Td () Tj ET
+BT /F1 11 Tf 50 722 Td (C                         Am) Tj ET
+BT /F1 11 Tf 50 705 Td (e|-------0-------0-------|-------0-------0-------|) Tj ET
+BT /F1 11 Tf 50 688 Td (B|-----1-----1-------1---|-----1-----1-------1---|) Tj ET
+BT /F1 11 Tf 50 671 Td (G|---0-----0-----0-------|---2-----2-----2-------|) Tj ET
+BT /F1 11 Tf 50 654 Td (D|-----------------------|-----------------------|) Tj ET
+BT /F1 11 Tf 50 637 Td (A|-3---------------------|-0---------------------|) Tj ET
+BT /F1 11 Tf 50 620 Td (E|-----------------------|-----------------------|) Tj ET
+BT /F1 11 Tf 50 603 Td () Tj ET
+BT /F1 11 Tf 50 586 Td (F                         G) Tj ET
+BT /F1 11 Tf 50 569 Td (e|-------1-------1-------|-------3-------3-------|) Tj ET
+BT /F1 11 Tf 50 552 Td (B|-----1-----1-------1---|-----0-----0-------0---|) Tj ET
+BT /F1 11 Tf 50 535 Td (G|---2-----2-----2-------|---0-----0-----0-------|) Tj ET
+BT /F1 11 Tf 50 518 Td (D|-3---------------------|-----------------------|) Tj ET
+BT /F1 11 Tf 50 501 Td (A|-----------------------|-----------------------|) Tj ET
+BT /F1 11 Tf 50 484 Td (E|-----------------------|-3---------------------|) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000319 00000 n 
+0000000394 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1776
+%%EOF

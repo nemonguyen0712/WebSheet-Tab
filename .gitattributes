@@ -1,0 +1,9 @@
+* text=auto eol=lf
+*.pdf binary
+*.gp binary
+*.gp3 binary
+*.gp4 binary
+*.gp5 binary
+*.gpx binary
+*.png binary
+*.jpg binary

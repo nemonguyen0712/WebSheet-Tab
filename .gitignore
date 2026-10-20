@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.vercel/
+.env*.local
+.env
+next-env.d.ts
+*.tsbuildinfo
+# Copied from node_modules by scripts/copy-assets.mjs
+public/pdfjs/
+public/alphatab/
+
+# Local editor/agent settings
+.claude/
