@@ -40,20 +40,26 @@ export default async function Home() {
         </div>
       )}
       {categories.length > 0 ? (
-        <>
-          {/* One card per section (Oliu Solo, Oliu Melody); each opens its own page. */}
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {categories.map((c) => (
-              <CategoryCard key={c.slug} category={c} />
-            ))}
-          </div>
-          {loose.length > 0 && (
-            <section className="mt-8">
-              <h2 className="rounded-md bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">Bài khác</h2>
-              <SongBrowser songs={loose} scoped />
-            </section>
-          )}
-        </>
+        // Search over every song; until the visitor types, the section cards show instead of the list.
+        <SongBrowser
+          songs={songs}
+          idle={
+            <>
+              {/* One card per section (Oliu Solo, Oliu Melody); each opens its own page. */}
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {categories.map((c) => (
+                  <CategoryCard key={c.slug} category={c} />
+                ))}
+              </div>
+              {loose.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="rounded-md bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">Bài khác</h2>
+                  <SongBrowser songs={loose} scoped />
+                </section>
+              )}
+            </>
+          }
+        />
       ) : (
         <SongBrowser songs={songs} />
       )}
