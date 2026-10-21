@@ -31,7 +31,7 @@ export default async function AccountPage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight">Tài khoản</h1>
+      <h1 className="rounded-lg bg-surface/90 px-4 py-3 text-2xl font-bold tracking-tight text-deep backdrop-blur-sm">Tài khoản</h1>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <p className="text-sm text-muted">Tên đăng nhập</p>

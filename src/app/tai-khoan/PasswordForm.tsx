@@ -4,7 +4,7 @@ import { useState } from "react";
 import { changePassword, checkCurrentPassword } from "./actions";
 
 const input = "h-11 w-full rounded-md border border-border bg-bg px-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20";
-const button = "h-11 rounded-md bg-accent px-5 text-sm font-medium text-accent-fg hover:bg-deep disabled:opacity-60";
+const button = "h-11 shrink-0 whitespace-nowrap rounded-md bg-accent px-5 text-sm font-medium text-accent-fg hover:bg-deep disabled:opacity-60";
 
 /** Two steps: confirm the current password, then choose a new one (any characters). */
 export function PasswordForm() {

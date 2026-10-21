@@ -5,7 +5,7 @@ export async function AccountNav() {
   const viewer = await getViewer();
   const button = "inline-flex h-9 shrink-0 items-center rounded-lg px-2.5 text-[13px] font-medium sm:px-3 sm:text-sm";
   return (
-    <nav className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
+    <nav className="flex shrink-0 items-center gap-1 sm:gap-1.5">
       {viewer?.isAdmin && (
         <Link href="/admin" className={`${button} text-muted hover:text-fg`}>
           Quản trị

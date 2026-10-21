@@ -42,20 +42,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="vi" className={`${beVietnam.variable} ${bitter.variable} ${jetbrains.variable}`}>
       <body className="relative isolate flex min-h-dvh flex-col font-sans antialiased">
         <Ambient />
-        <div className="bg-deep text-[12.5px] text-[#c9d6cc]">
-          <div className="mx-auto flex h-8 max-w-5xl items-center justify-between gap-3 px-4">
-            <span className="truncate">{SITE_NAME}</span>
-            <a href={ZALO_URL} target="_blank" rel="noreferrer" className="shrink-0 hover:text-white">
-              Hỗ trợ Zalo: {ZALO_DISPLAY}
-            </a>
-          </div>
-        </div>
         <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/75 shadow-[0_1px_0_rgb(255_255_255/0.5)] backdrop-blur-md">
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
             <Link href="/" className="flex min-w-0 items-center gap-2.5">
               <LogoMark className="size-9 shrink-0" />
               <span className="truncate font-display text-[21px] font-bold leading-none text-deep">{SITE_NAME}</span>
             </Link>
+            {/* Zalo support (used to sit in a separate strip above the header). */}
+            <a
+              href={ZALO_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-[#0068ff] hover:bg-surface/70 sm:text-sm"
+              title={`Hỗ trợ qua Zalo: ${ZALO_DISPLAY}`}
+            >
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" strokeLinejoin="round" />
+              </svg>
+              <span className="sm:hidden">Zalo</span>
+              <span className="hidden sm:inline">Hỗ trợ Zalo: {ZALO_DISPLAY}</span>
+            </a>
             <AccountNav />
           </div>
         </header>

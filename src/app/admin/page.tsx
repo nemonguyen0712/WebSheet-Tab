@@ -91,7 +91,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="allow-select mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <h1 className="text-2xl font-bold tracking-tight">Quản trị</h1>
+      <h1 className="rounded-lg bg-surface/90 px-4 py-3 text-2xl font-bold tracking-tight text-deep backdrop-blur-sm">Quản trị</h1>
       {matkhau && PASSWORD_MESSAGES[matkhau] && (
         <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{PASSWORD_MESSAGES[matkhau]}</p>
       )}
