@@ -11,10 +11,10 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl px-4 pb-10">
       {!viewer?.active && (
-        <section className="mt-4 overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-5 sm:flex sm:items-center sm:gap-6 sm:p-6">
+        <section className="mt-5 rounded-lg border border-border bg-surface p-5 sm:flex sm:items-center sm:gap-6 sm:p-7">
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-accent">Sheet · Tab guitar</p>
-            <h1 className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-balance sm:text-2xl">
+            <p className="text-[11.5px] font-semibold uppercase tracking-[0.2em] text-brass">Solo · Melody · Cập nhật liên tục</p>
+            <h1 className="mt-2 text-[26px] font-bold leading-tight text-deep text-balance sm:text-[32px]">
               Kho sheet & tab guitar, cập nhật liên tục
             </h1>
             <p className="mt-1.5 text-[15px] text-muted">
@@ -23,7 +23,7 @@ export default async function Home() {
           </div>
           <Link
             href={viewer ? "/dang-ky" : "/dang-nhap?next=/dang-ky"}
-            className="mt-4 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-xl bg-accent px-6 font-semibold text-accent-fg shadow-sm hover:opacity-90 sm:mt-0 sm:w-auto"
+            className="mt-5 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-md bg-accent px-7 font-semibold text-accent-fg hover:bg-deep sm:mt-0 sm:w-auto"
           >
             Đăng ký ngay
           </Link>

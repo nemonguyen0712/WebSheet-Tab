@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Bitter, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
+import { LogoMark } from "@/components/Logo";
 import { SITE_NAME, ZALO_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -12,6 +13,12 @@ const beVietnam = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
 });
 
+const bitter = Bitter({
+  subsets: ["latin", "vietnamese"],
+  weight: ["600", "700"],
+  variable: "--font-bitter",
+});
+
 const jetbrains = JetBrains_Mono({
   subsets: ["latin", "vietnamese"],
   variable: "--font-jetbrains",
@@ -19,47 +26,58 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
-  description: "Kho lưu trữ tab, sheet và hợp âm guitar.",
+  description: "Kho sheet & tab guitar solo, melody — cập nhật liên tục.",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#ffffff",
+  themeColor: "#16291d",
   colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} ${jetbrains.variable}`}>
+    <html lang="vi" className={`${beVietnam.variable} ${bitter.variable} ${jetbrains.variable}`}>
       <body className="flex min-h-dvh flex-col font-sans antialiased">
-        <header className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur">
+        <div className="bg-deep text-[12.5px] text-[#c9d6cc]">
+          <div className="mx-auto flex h-8 max-w-5xl items-center justify-between gap-3 px-4">
+            <span className="truncate">{SITE_NAME} · Sheet & tab guitar</span>
+            {ZALO_URL && (
+              <a href={ZALO_URL} target="_blank" rel="noreferrer" className="shrink-0 hover:text-white">
+                Hỗ trợ qua Zalo
+              </a>
+            )}
+          </div>
+        </div>
+        <header className="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
-            <Link href="/" className="flex min-w-0 items-center gap-2 font-bold tracking-tight">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-fg">
-                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-                  <path d="M4 7h16M4 10h16M4 13h16M4 16h16" strokeLinecap="round" />
-                  <circle cx="9" cy="10" r="1.6" fill="currentColor" stroke="none" />
-                  <circle cx="14" cy="13" r="1.6" fill="currentColor" stroke="none" />
-                  <circle cx="11" cy="16" r="1.6" fill="currentColor" stroke="none" />
-                </svg>
+            <Link href="/" className="flex min-w-0 items-center gap-2.5">
+              <LogoMark className="size-9 shrink-0" />
+              <span className="min-w-0 leading-none">
+                <span className="block truncate font-display text-[19px] font-bold text-deep">{SITE_NAME}</span>
+                <span className="mt-0.5 hidden text-[10px] font-semibold uppercase tracking-[0.2em] text-brass min-[400px]:block">
+                  Sheet · Tab guitar
+                </span>
               </span>
-              <span className="truncate text-[15px] sm:text-base">{SITE_NAME}</span>
             </Link>
             <AccountNav />
           </div>
         </header>
         <div className="flex-1">{children}</div>
-        <footer className="border-t border-border bg-surface px-4 py-6 text-center text-sm text-muted">
-          {SITE_NAME}
-          {ZALO_URL && (
-            <>
-              {" · Hỗ trợ: "}
-              <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
-                Nhắn Zalo
+        <footer className="bg-deep px-4 py-8 text-sm text-[#b9c7bc]">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 text-center">
+            <div className="flex items-center gap-2">
+              <LogoMark className="size-7" />
+              <span className="font-display text-base font-bold text-[#f5f1e6]">{SITE_NAME}</span>
+            </div>
+            <p>Kho sheet & tab guitar solo, melody — cập nhật liên tục.</p>
+            {ZALO_URL && (
+              <a href={ZALO_URL} target="_blank" rel="noreferrer" className="font-medium text-[#e9d2a8] underline underline-offset-4">
+                Hỗ trợ: nhắn Zalo
               </a>
-            </>
-          )}
+            )}
+          </div>
         </footer>
         <ContentGuard />
       </body>

@@ -13,23 +13,36 @@
   --color-accent: var(--accent);
   --color-accent-fg: var(--accent-fg);
   --color-accent-soft: var(--accent-soft);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-deep: var(--deep);
   --color-chord: var(--chord);
   --font-sans: var(--font-be-vietnam), system-ui, sans-serif;
+  --font-display: var(--font-bitter), Georgia, serif;
   --font-mono: var(--font-jetbrains), ui-monospace, Consolas, monospace;
+  /* Crisp, nearly square corners — same feel as nhatanhmusic.netlify.app. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 5px;
+  --radius-2xl: 6px;
 }
 
 :root {
-  /* Always light: bright, high-contrast and easy to read on any phone. */
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --surface-2: #eef0f3;
-  --fg: #111827;
-  --muted: #5b6472;
-  --border: #e3e6eb;
-  --accent: #ea580c;
-  --accent-fg: #ffffff;
-  --accent-soft: #fff1e7;
-  --chord: #c2410c;
+  /* Shared palette with Nhật Anh Music: cream paper, forest green, brass. Always light. */
+  --bg: #f5f1e6; /* cream */
+  --surface: #fcfaf3; /* paper */
+  --surface-2: #efebdd; /* cream-2 */
+  --fg: #18241c; /* ink */
+  --muted: #5e6b60;
+  --border: #ded7c4; /* line */
+  --accent: #1f3d2b; /* forest green */
+  --accent-fg: #f5f1e6;
+  --accent-soft: #e9f0e9;
+  --brass: #9c6b2f;
+  --brass-soft: #fcf7ec;
+  --deep: #16291d; /* dark green strips & footer */
+  --chord: #9c6b2f;
   color-scheme: light;
 }
 
@@ -40,6 +53,13 @@ html {
 body {
   background: var(--bg);
   color: var(--fg);
+}
+
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
 }
 
 /* No selecting, long-press menus or dragging sheets out; form fields and .allow-select stay normal. */
@@ -101,13 +121,13 @@ input[type="search"]::-webkit-search-cancel-button {
   background: rgb(255 214 102 / 0.3);
 }
 .at-cursor-beat {
-  background: #b4541a;
+  background: #9c6b2f;
   width: 3px;
 }
 .at-selection div {
-  background: rgb(180 84 26 / 0.12);
+  background: rgb(156 107 47 / 0.12);
 }
 .at-highlight * {
-  fill: #b4541a;
-  stroke: #b4541a;
+  fill: #9c6b2f;
+  stroke: #9c6b2f;
 }

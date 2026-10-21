@@ -1,11 +1,12 @@
 import { KIND_LABELS } from "@/lib/kinds";
 import type { TabKind } from "@/lib/types";
 
+/** Same tag colors as Nhật Anh Music's condition grades. */
 const STYLES: Record<TabKind, string> = {
-  pdf: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-  notation: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-  text: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  image: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300",
+  pdf: "bg-[#f7e2de] text-[#8c2f20]",
+  notation: "bg-[#dfede3] text-[#245c3b]",
+  text: "bg-[#ede7d7] text-[#5e6b60]",
+  image: "bg-[#f5e9d3] text-[#8a5f1e]",
 };
 
 /** Short names used on the song list. */

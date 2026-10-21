@@ -146,7 +146,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm bài, ca sĩ… (không dấu cũng được)"
-            className="h-12 w-full rounded-xl border border-border bg-surface pl-11 pr-10 text-base shadow-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25"
+            className="h-12 w-full rounded-md border border-[#c9c0a8] bg-surface pl-11 pr-10 text-base outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/20"
             autoComplete="off"
           />
           {query && (
@@ -239,18 +239,18 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
               <li key={i.song.id}>
                 <Link
                   href={songHref(i.song, matchedFile?.file)}
-                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-surface p-3.5 shadow-sm transition hover:border-accent hover:shadow-md active:scale-[0.99]"
+                  className="flex h-full flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition hover:border-brass active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-2">
-                    <span className="line-clamp-2 flex-1 font-semibold leading-snug">{i.song.title}</span>
+                    <span className="line-clamp-2 flex-1 font-semibold leading-snug text-deep">{i.song.title}</span>
                     {i.modified > newCutoff && (
-                      <span className="mt-0.5 shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent">
+                      <span className="mt-0.5 shrink-0 rounded-sm border border-[#e9d2a8] bg-brass-soft px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brass">
                         Mới
                       </span>
                     )}
                   </div>
                   {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
-                  {matchedFile && <div className="-mt-1 truncate text-sm text-accent">↳ {matchedFile.label}</div>}
+                  {matchedFile && <div className="-mt-1 truncate text-sm text-brass">↳ {matchedFile.label}</div>}
                   <div className="mt-auto flex flex-wrap gap-1">
                     {KIND_ORDER.filter((k) => i.kinds.has(k)).map((k) => (
                       <KindBadge key={k} kind={k} count={i.kinds.get(k)} />
@@ -272,8 +272,8 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors ${
-        active ? "border-accent bg-accent text-accent-fg" : "border-border bg-surface hover:border-accent"
+      className={`h-9 shrink-0 whitespace-nowrap rounded-md border px-3.5 text-sm font-medium transition-colors ${
+        active ? "border-accent bg-accent text-accent-fg" : "border-border bg-surface hover:border-brass"
       }`}
     >
       {children}

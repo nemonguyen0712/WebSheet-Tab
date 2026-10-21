@@ -1,4 +1,4 @@
-export const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Kho Tab Guitar";
+export const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Oliutab";
 
 /** Zalo number for support (forgotten passwords, payment questions); hidden when not set. */
 const zalo = process.env.NEXT_PUBLIC_ZALO?.replace(/\D/g, "");

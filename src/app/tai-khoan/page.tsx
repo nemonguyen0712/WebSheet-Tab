@@ -99,7 +99,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </button>
         </form>
         {passwordMessage && (
-          <p className={`mt-2 text-sm ${passwordMessage[1] ? "text-emerald-600" : "text-red-600"}`}>{passwordMessage[0]}</p>
+          <p className={`mt-2 text-sm ${passwordMessage[1] ? "text-[#2f7a50]" : "text-[#b33a28]"}`}>{passwordMessage[0]}</p>
         )}
       </section>
 

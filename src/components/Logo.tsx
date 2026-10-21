@@ -1,0 +1,31 @@
+/** Oliutab emblem: an olive sprig ("ô liu") across six tab strings, in the shared green & brass. */
+export function LogoMark({ className = "size-9" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 40" className={className} aria-hidden>
+      <defs>
+        <clipPath id="oliutab-inner">
+          <circle cx="20" cy="20" r="15.6" />
+        </clipPath>
+      </defs>
+      <circle cx="20" cy="20" r="19" fill="#fcfaf3" stroke="#1f3d2b" strokeWidth="1.8" />
+      <circle cx="20" cy="20" r="16.3" fill="none" stroke="#9c6b2f" strokeWidth="0.7" />
+      <g clipPath="url(#oliutab-inner)" stroke="#9c6b2f" strokeWidth="0.6" opacity="0.6">
+        {[12.5, 15.5, 18.5, 21.5, 24.5, 27.5].map((y) => (
+          <line key={y} x1="0" y1={y} x2="40" y2={y} />
+        ))}
+      </g>
+      <path d="M11 29.5C15.5 25.5 21.5 18.5 28.5 11" fill="none" stroke="#1f3d2b" strokeWidth="1.4" strokeLinecap="round" />
+      <g fill="#2f5a40">
+        <path d="M14.3 26.3c-2.6-.4-4.4-2.3-4.6-4.6 2.4.1 4.4 2 4.6 4.6z" />
+        <path d="M15.6 24.8c.6 2.6 2.7 4.2 5 4.1-.3-2.4-2.4-4.1-5-4.1z" />
+        <path d="M18.6 21.4c-2.5-.8-4-3-3.9-5.3 2.3.4 4.1 2.6 3.9 5.3z" />
+        <path d="M20.2 19.6c.9 2.5 3.2 3.8 5.5 3.4-.6-2.3-2.9-3.8-5.5-3.4z" />
+        <path d="M23.4 16.1c-2.3-1.2-3.4-3.6-2.9-5.8 2.2.8 3.6 3.2 2.9 5.8z" />
+        <path d="M25.4 14.2c1.3 2.3 3.8 3.2 5.9 2.4-.9-2.1-3.5-3.2-5.9-2.4z" />
+        <path d="M28.5 11c.6-.8 1.6-1.4 2.6-1.4-.2 1.1-1.1 2-2.6 1.4z" />
+      </g>
+      <path d="M26.6 13.4c-.4 1.2-.9 2.1-1.6 2.7" fill="none" stroke="#1f3d2b" strokeWidth="0.7" strokeLinecap="round" />
+      <ellipse cx="24.4" cy="17.3" rx="1.9" ry="2.5" transform="rotate(25 24.4 17.3)" fill="#9c6b2f" />
+    </svg>
+  );
+}
