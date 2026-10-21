@@ -22,8 +22,10 @@ export interface Viewer {
 }
 
 function isAdminPhone(phone: string) {
+  // Tolerates quotes pasted along with the value (deploy.env writes ADMIN_PHONES='0901…').
   return (process.env.ADMIN_PHONES ?? "")
-    .split(",")
+    .replace(/["']/g, "")
+    .split(/[,;]/)
     .map((p) => normalizePhone(p))
     .includes(phone);
 }
