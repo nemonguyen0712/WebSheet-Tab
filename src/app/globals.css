@@ -56,19 +56,8 @@ body {
 }
 
 /* Ambient background (see components/Ambient.tsx). */
-.ambient-glow {
-  background:
-    radial-gradient(70rem 24rem at 50% -8rem, rgb(31 61 43 / 0.18), transparent 70%),
-    radial-gradient(40rem 30rem at 100% 15%, rgb(156 107 47 / 0.14), transparent 70%),
-    radial-gradient(45rem 32rem at 0% 55%, rgb(47 90 64 / 0.1), transparent 70%),
-    radial-gradient(80rem 24rem at 50% calc(100% + 8rem), rgb(22 41 29 / 0.22), transparent 70%);
-}
 .ambient-photo {
-  /* Olive-toned photo (see Ambient.tsx), shown nearly as-is: ~20% ambience. */
-  background: url("/ambient.webp?v=8") center / cover no-repeat;
-}
-.ambient-wash {
-  background: rgb(245 241 230 / 0.2);
+  background: url("/ambient.webp?v=9") center / cover no-repeat;
 }
 
 h1,

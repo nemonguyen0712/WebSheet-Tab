@@ -36,7 +36,7 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 - [ ] GitHub
 - [ ] Supabase
 - [ ] Netlify
-- [ ] payOS
+- [ ] SePay
 
 ---
 
@@ -44,7 +44,7 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 
 ### 1. Chuẩn bị biến môi trường
 Trong `.env.local`, điền thêm (nếu chưa có):
-- `NEXT_PUBLIC_ZALO=` số Zalo hỗ trợ khách, ví dụ `0901234567`
+- `NEXT_PUBLIC_ZALO=` (không bắt buộc) số Zalo hỗ trợ khách. Mặc định đã là `0908928517`, chỉ điền khi muốn đổi số khác.
 
 Rồi chạy:
 ```bash
@@ -61,7 +61,7 @@ Lệnh này tạo file **`netlify.env`** (đã được gitignore, không đẩy
 ### 3. Nhập biến môi trường
 1. **Site configuration → Environment variables → Add a variable → Import from a .env file**.
 2. Mở file `netlify.env` bằng Notepad, copy toàn bộ, dán vào rồi **Import variables**.
-3. Với `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON` và các key payOS: bấm vào từng biến, tick **Contains secret values**.
+3. Với `SUPABASE_SERVICE_ROLE_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON` và `SEPAY_API_KEY` (hoặc các key payOS): bấm vào từng biến, tick **Contains secret values**.
 4. **Xóa file `netlify.env`** trên máy sau khi import xong. Cần thì chạy lại lệnh để tạo lại.
 
 ### 4. Địa chỉ web
@@ -81,16 +81,33 @@ Nếu build hoặc trang bị lỗi: Netlify → **Deploys** → bấm vào lầ
 
 ---
 
-## C. payOS — để bắt đầu thu tiền
+## C. Thu tiền vào VietinBank
 
-1. Đăng ký <https://payos.vn>, liên kết tài khoản ngân hàng. Gói miễn phí hiện áp dụng với **Kiên Long Bank / MSB**.
-2. Tạo **kênh thanh toán**, lấy **Client ID, API Key, Checksum Key**.
-3. Thêm 3 biến trên Netlify: `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` (tick *Contains secret values*). Điền luôn vào `.env.local` để chạy thử trên máy. Trigger deploy lại.
-4. Trong payOS, đặt **Webhook URL** = `https://<site của bạn>/api/payments/payos`.
-5. **Mua thử gói 20.000đ** bằng một tài khoản khách:
-   - [ ] Trả xong, web tự báo "Thanh toán thành công".
-   - [ ] Trang Tài khoản hiện hạn dùng thêm 30 ngày.
-   - [ ] `/admin` thấy đơn ở trạng thái "Đã thanh toán", doanh thu tăng.
+Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR **có sẵn số tiền và nội dung chuyển khoản**, khách chỉ cần quét rồi bấm chuyển.
+(payOS không liên kết được VietinBank. Nếu sau này đổi sang ngân hàng payOS hỗ trợ, xem README mục 3.)
+
+### Cách 1: chuyển khoản tay (mặc định, 0đ)
+
+Tiền vào tài khoản **VietinBank 0908928517 — HUYNH NHAT ANH** (đã cài sẵn trong code, muốn đổi tài khoản thì đặt `BANK_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`). Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
+
+1. Trên Netlify: đặt `PAYMENT_PROVIDER=manual` (hoặc xóa biến này đi, mặc định đã là `manual`) Trigger deploy lại. (Nút nhắn Zalo dùng số hỗ trợ `0908928517` có sẵn.)
+2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
+3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
+   - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
+   - [ ] Bấm **Đã nhận tiền** trong `/admin`, trang thanh toán của khách tự chuyển sang "Thanh toán thành công".
+   - [ ] Trang Tài khoản hiện hạn dùng thêm 30 ngày, `/admin` thấy doanh thu tăng.
+
+### Cách 2: SePay tự kích hoạt (khi đơn nhiều, không muốn bấm tay)
+
+SePay theo dõi tài khoản VietinBank và báo về web khi có khoản chuyển đúng nội dung. Gói FREE có 50 giao dịch/tháng, vượt thì tính phí theo giao dịch (xem <https://sepay.vn/bang-gia.html>).
+
+1. Đăng ký <https://my.sepay.vn> → **Ngân hàng → Kết nối tài khoản → tab Cá nhân → VietinBank**. Nhập số tài khoản, tên chủ tài khoản, CCCD và số điện thoại đăng ký với ngân hàng.
+2. **Webhooks → Thêm webhook**:
+   - URL: `https://<site của bạn>/api/payments/sepay`
+   - Sự kiện: **Tiền vào**
+   - Kiểu xác thực: **API Key**, tự đặt một chuỗi dài ngẫu nhiên và ghi lại.
+3. Giữ các biến `BANK_*` ở cách 1, đổi `PAYMENT_PROVIDER=sepay` (nội dung chuyển khoản sẽ đổi thành `TAB<mã đơn>` để SePay tự nhận ra đơn) và thêm `SEPAY_API_KEY=<chuỗi ở bước 2>` (tick **Contains secret values**). Trigger deploy lại.
+4. Mua thử: trả xong, web tự báo "Thanh toán thành công" mà không cần bấm gì trong `/admin`.
 
 ---
 
@@ -110,7 +127,7 @@ Nên bật thêm:
 
 ## D. Vận hành hằng ngày
 
-- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web.
+- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web, ở trang **Oliu Solo** (`/solo`) hoặc **Oliu Melody** (`/melody`). Mỗi thư mục cấp 1 trên Drive là một mục như vậy trên trang chủ.
 - **Khách quên mật khẩu:** khách nhắn Zalo → `/admin` → tìm khách → nhập mật khẩu mới → **Đặt lại MK** → gửi mật khẩu cho khách và nhắc họ đổi lại.
 - **Khách chuyển khoản tay hoặc bạn muốn tặng ngày:** `/admin` → **+30 ngày**.
 - **File quá lớn (trên khoảng 6MB):** nén PDF hoặc ảnh trước khi up, vì Netlify không trả được file quá lớn.

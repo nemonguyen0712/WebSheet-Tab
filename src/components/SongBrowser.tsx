@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { categoryRank } from "@/lib/categories";
 import { KIND_LABELS, KIND_ORDER, fileLabel, fold, songSubtitle } from "@/lib/kinds";
 import { songHref } from "@/lib/links";
 import { NEW_DAYS } from "@/lib/site";
@@ -21,7 +22,11 @@ interface Indexed {
 
 const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true });
 
-export function SongBrowser({ songs }: { songs: Song[] }) {
+/**
+ * Search and filters over a list of songs. `scoped`: every song is already in one section
+ * (the /solo or /melody page), so there are no section tabs and cards skip the section name.
+ */
+export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?: boolean }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<TabKind | "all">("all");
   const [category, setCategory] = useState("");
@@ -85,13 +90,14 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
 
   /** Top-level folders (e.g. "Solo", "Melody") with how many songs each holds. */
   const categories = useMemo(() => {
+    if (scoped) return [];
     const counts = new Map<string, number>();
     for (const i of indexed) {
       const top = i.song.category[0];
       if (top) counts.set(top, (counts.get(top) ?? 0) + 1);
     }
     return [...counts].sort(([a], [b]) => categoryRank(a) - categoryRank(b) || collator.compare(a, b));
-  }, [indexed]);
+  }, [indexed, scoped]);
 
   const kindCounts = useMemo(() => {
     const counts = new Map<TabKind, number>();
@@ -251,7 +257,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
       ) : (
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {results.map((r) => (
-            <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} />
+            <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn={scoped} />
           ))}
         </ul>
       )}
@@ -260,12 +266,6 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
 }
 
 type Result = { i: Indexed; matchedFile: Indexed["files"][number] | null };
-
-/** Solo first, then Melody, then other folders A→Z. */
-function categoryRank(name: string) {
-  const f = fold(name);
-  return f === "solo" ? 0 : f === "melody" ? 1 : 2;
-}
 
 /** One group per category (already in display order); songs outside any folder go under "Khác". */
 function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
@@ -279,7 +279,7 @@ function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
 }
 
 function SongCard({ i, matchedFile, newCutoff, inColumn }: Result & { newCutoff: number; inColumn?: boolean }) {
-  // Inside a Solo / Melody column the category is already the column title.
+  // Inside a Solo / Melody column or page the category is already the title.
   const sub = songSubtitle(inColumn ? { ...i.song, category: i.song.category.slice(1) } : i.song);
   return (
     <li>

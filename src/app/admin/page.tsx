@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MIN_PASSWORD, formatPhone } from "@/lib/account";
-import { formatDate, formatVnd, getPlan } from "@/lib/plans";
+import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
+import { getOrder, markPaid } from "@/lib/payments";
+import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
@@ -24,6 +25,15 @@ async function extend(formData: FormData) {
   const admin = createAdminClient();
   if (days > 0) await admin.rpc("extend_subscription", { p_user: userId, p_days: days });
   else await admin.from("profiles").update({ paid_until: new Date().toISOString() }).eq("id", userId);
+  revalidatePath("/admin");
+}
+
+/** Manual transfers: once the money shows up in the bank app, mark the order paid (extends the plan, counts as revenue). */
+async function confirmOrder(formData: FormData) {
+  "use server";
+  const viewer = await requireAdmin();
+  const order = await getOrder(Number(formData.get("order")));
+  if (order?.status === "pending") await markPaid(order.order_code, order.amount, `manual:${viewer.username}`);
   revalidatePath("/admin");
 }
 
@@ -62,15 +72,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     usersQuery = usersQuery.or(digits.length >= 3 ? `username.ilike.%${term}%,phone.like.%${digits}%` : `username.ilike.%${term}%`);
   }
 
+  // The same search box filters orders by phone, which is the transfer note in manual mode.
+  let ordersQuery = admin
+    .from("orders")
+    .select("order_code, plan, amount, status, created_at, paid_at, profiles!inner(username, phone)")
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (digits.length >= 3) ordersQuery = ordersQuery.like("profiles.phone", `%${digits}%`);
+
   const [{ data: users }, { count: activeCount }, { data: monthOrders }, { data: orders }, { data: viewStats }] = await Promise.all([
     usersQuery,
     admin.from("profiles").select("id", { count: "exact", head: true }).gt("paid_until", now.toISOString()),
     admin.from("orders").select("amount").eq("status", "paid").gte("paid_at", monthStart),
-    admin
-      .from("orders")
-      .select("order_code, plan, amount, status, created_at, profiles(username, phone)")
-      .order("created_at", { ascending: false })
-      .limit(30),
+    ordersQuery,
     admin.rpc("file_view_stats", { p_since: new Date(now.getTime() - 86_400_000).toISOString() }),
   ]);
   const revenue = (monthOrders ?? []).reduce((sum, o) => sum + o.amount, 0);
@@ -134,7 +148,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <input
               name="q"
               defaultValue={q}
-              placeholder="Tìm tên đăng nhập / SĐT…"
+              placeholder="Tìm tên đăng nhập / SĐT (lọc cả đơn)…"
               className="h-9 w-56 max-w-full rounded-lg border border-border bg-bg px-3 text-sm"
             />
             <button className="h-9 rounded-lg border border-border px-3 text-sm hover:border-accent">Tìm</button>
@@ -202,21 +216,52 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Đơn gần đây</h2>
+        <p className="mt-1 text-sm text-muted">
+          Chuyển khoản tay: nội dung chuyển khoản là số điện thoại của khách. Thấy trong app ngân hàng có khoản đúng số tiền, đúng
+          số điện thoại, sau giờ tạo đơn thì bấm “Đã nhận tiền”, gói được cộng ngay.
+        </p>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="text-left text-muted">
+              <tr>
+                <th className="py-2 font-normal">Đơn</th>
+                <th className="py-2 font-normal">Khách · nội dung CK</th>
+                <th className="py-2 font-normal">Gói</th>
+                <th className="py-2 font-normal">Số tiền</th>
+                <th className="py-2 font-normal">Thời gian</th>
+                <th className="py-2 text-right font-normal">Trạng thái</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-border">
-              {(orders ?? []).map((o) => (
-                <tr key={o.order_code}>
-                  <td className="py-2 font-mono">#{o.order_code}</td>
-                  <td className="py-2">{(o.profiles as unknown as { username: string } | null)?.username}</td>
-                  <td className="py-2">{getPlan(o.plan)?.label ?? o.plan}</td>
-                  <td className="py-2">{formatVnd(o.amount)}</td>
-                  <td className="py-2 text-muted">{formatDate(o.created_at)}</td>
-                  <td className="py-2 text-right">
-                    <StatusBadge status={o.status} />
-                  </td>
-                </tr>
-              ))}
+              {(orders ?? []).map((o) => {
+                const buyer = o.profiles as unknown as { username: string; phone: string } | null;
+                return (
+                  <tr key={o.order_code}>
+                    <td className="py-2 font-mono">#{o.order_code}</td>
+                    <td className="py-2">
+                      <div className="font-medium">{buyer?.username}</div>
+                      <div className="font-mono text-xs">{buyer && localPhone(buyer.phone)}</div>
+                    </td>
+                    <td className="py-2">{getPlan(o.plan)?.label ?? o.plan}</td>
+                    <td className="py-2">{formatVnd(o.amount)}</td>
+                    <td className="py-2 tabular-nums">
+                      <div>Tạo {formatDateTime(o.created_at)}</div>
+                      {o.paid_at && <div className="text-xs text-muted">Nhận {formatDateTime(o.paid_at)}</div>}
+                    </td>
+                    <td className="py-2 text-right">
+                      {o.status === "pending" ? (
+                        <form action={confirmOrder} className="inline-flex items-center gap-2">
+                          <input type="hidden" name="order" value={o.order_code} />
+                          <StatusBadge status={o.status} />
+                          <button className="h-8 rounded-md border border-border px-2 text-xs hover:border-accent">Đã nhận tiền</button>
+                        </form>
+                      ) : (
+                        <StatusBadge status={o.status} />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

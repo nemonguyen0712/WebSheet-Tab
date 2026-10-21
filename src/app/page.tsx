@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CategoryCard } from "@/components/CategoryCard";
 import { SongBrowser } from "@/components/SongBrowser";
+import { listCategories } from "@/lib/categories";
 import { PLANS, formatVnd } from "@/lib/plans";
 import { listSongs } from "@/lib/source";
 import { getViewer } from "@/lib/viewer";
@@ -7,6 +9,8 @@ import { getViewer } from "@/lib/viewer";
 export default async function Home() {
   const [{ songs, error }, viewer] = await Promise.all([listSongs(), getViewer()]);
   const cheapest = Math.min(...PLANS.map((p) => p.price));
+  const categories = listCategories(songs);
+  const loose = songs.filter((s) => !s.category[0]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-10">
@@ -15,10 +19,10 @@ export default async function Home() {
           <div className="flex-1">
             <p className="text-[11.5px] font-semibold uppercase tracking-[0.2em] text-brass">Solo · Melody · Cập nhật liên tục</p>
             <h1 className="mt-2 text-[26px] font-bold leading-tight text-deep text-balance sm:text-[32px]">
-              Kho sheet & tab guitar, cập nhật liên tục
+              Kho sheet guitar, cập nhật liên tục
             </h1>
             <p className="mt-1.5 text-[15px] text-muted">
-              Xem toàn bộ {songs.length > 0 ? `${songs.length} bài` : "kho tab"} và mọi bài mới, chỉ {formatVnd(cheapest)}/tháng.
+              Xem toàn bộ {songs.length > 0 ? `${songs.length} bài` : "kho Oliu"} và mọi bài mới, chỉ {formatVnd(cheapest)}/tháng.
             </p>
           </div>
           <Link
@@ -35,7 +39,24 @@ export default async function Home() {
           <p className="mt-1 break-words">{error}</p>
         </div>
       )}
-      <SongBrowser songs={songs} />
+      {categories.length > 0 ? (
+        <>
+          {/* One card per section (Oliu Solo, Oliu Melody); each opens its own page. */}
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            {categories.map((c) => (
+              <CategoryCard key={c.slug} category={c} />
+            ))}
+          </div>
+          {loose.length > 0 && (
+            <section className="mt-8">
+              <h2 className="rounded-md bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">Bài khác</h2>
+              <SongBrowser songs={loose} scoped />
+            </section>
+          )}
+        </>
+      ) : (
+        <SongBrowser songs={songs} />
+      )}
     </main>
   );
 }

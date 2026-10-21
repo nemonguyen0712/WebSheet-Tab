@@ -13,16 +13,28 @@ const env = Object.fromEntries(
 const raw = env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "";
 const key = raw ? JSON.parse(raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8")) : null;
 
+const provider = ["payos", "sepay"].includes(env.PAYMENT_PROVIDER) ? env.PAYMENT_PROVIDER : "manual";
+
 const out = {
   DRIVE_FOLDER_ID: env.DRIVE_FOLDER_ID,
   GOOGLE_SERVICE_ACCOUNT_JSON: key && JSON.stringify({ client_email: key.client_email, private_key: key.private_key }),
   NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
-  PAYMENT_PROVIDER: env.PAYMENT_PROVIDER || "payos",
-  PAYOS_CLIENT_ID: env.PAYOS_CLIENT_ID,
-  PAYOS_API_KEY: env.PAYOS_API_KEY,
-  PAYOS_CHECKSUM_KEY: env.PAYOS_CHECKSUM_KEY,
+  PAYMENT_PROVIDER: provider,
+  ...(provider === "payos"
+    ? {
+        PAYOS_CLIENT_ID: env.PAYOS_CLIENT_ID,
+        PAYOS_API_KEY: env.PAYOS_API_KEY,
+        PAYOS_CHECKSUM_KEY: env.PAYOS_CHECKSUM_KEY,
+      }
+    : {
+        // The bank account has a built-in default (src/lib/payments/index.ts); pass it on only when overridden.
+        ...(env.BANK_NAME && { BANK_NAME: env.BANK_NAME }),
+        ...(env.BANK_ACCOUNT_NUMBER && { BANK_ACCOUNT_NUMBER: env.BANK_ACCOUNT_NUMBER }),
+        ...(env.BANK_ACCOUNT_NAME && { BANK_ACCOUNT_NAME: env.BANK_ACCOUNT_NAME }),
+        ...(provider === "sepay" && { SEPAY_API_KEY: env.SEPAY_API_KEY }),
+      }),
   ADMIN_PHONES: env.ADMIN_PHONES,
   NEXT_PUBLIC_ZALO: env.NEXT_PUBLIC_ZALO,
   NEXT_PUBLIC_SITE_URL: env.NEXT_PUBLIC_SITE_URL,

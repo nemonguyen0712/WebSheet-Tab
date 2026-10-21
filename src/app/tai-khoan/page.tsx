@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatPhone } from "@/lib/account";
-import { formatDate, formatVnd, getPlan } from "@/lib/plans";
+import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { MAX_DEVICES, getViewer } from "@/lib/viewer";
 import { PasswordForm } from "./PasswordForm";
@@ -90,7 +90,7 @@ export default async function AccountPage() {
                   #{o.order_code} · {getPlan(o.plan)?.label ?? o.plan} · {formatVnd(o.amount)}
                 </span>
                 <span className="flex items-center gap-2 text-muted">
-                  {formatDate(o.created_at)}
+                  {formatDateTime(o.created_at)}
                   <StatusBadge status={o.status} />
                 </span>
               </li>

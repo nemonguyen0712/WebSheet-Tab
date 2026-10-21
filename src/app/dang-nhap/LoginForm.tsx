@@ -147,13 +147,9 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
           {submitButton("Đăng nhập")}
           <p className="text-center text-sm text-muted">
             Quên mật khẩu?{" "}
-            {ZALO_URL ? (
-              <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
-                Nhắn Zalo để được đặt lại
-              </a>
-            ) : (
-              "Liên hệ quản trị viên để được đặt lại."
-            )}
+            <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
+              Nhắn Zalo để được đặt lại
+            </a>
           </p>
         </form>
       )}
