@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
-import { MIN_PASSWORD, formatPhone } from "@/lib/account";
+import { formatPhone } from "@/lib/account";
 import { formatDate, formatVnd, getPlan } from "@/lib/plans";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { createAdminClient, createClient, supabaseConfigured } from "@/lib/supabase/server";
+import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { MAX_DEVICES, getViewer } from "@/lib/viewer";
+import { PasswordForm } from "./PasswordForm";
 
 export const metadata: Metadata = { title: "Tài khoản" };
 
@@ -17,45 +17,7 @@ function deviceName(ua: string | null) {
   return [os, browser].filter(Boolean).join(" · ");
 }
 
-/** Checks a password by signing in on a throwaway client (doesn't touch the visitor's session). */
-async function passwordMatches(email: string, password: string) {
-  const probe = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { data, error } = await probe.auth.signInWithPassword({ email, password });
-  // End only this check's session — the default ("global") would sign the visitor out everywhere.
-  if (data.session) await probe.auth.signOut({ scope: "local" }).catch(() => {});
-  return !error;
-}
-
-async function changePassword(formData: FormData) {
-  "use server";
-  const current = String(formData.get("current") ?? "");
-  const password = String(formData.get("password") ?? "");
-  if (password.length < MIN_PASSWORD) redirect("/tai-khoan?matkhau=ngan");
-  if (password !== String(formData.get("confirm") ?? "")) redirect("/tai-khoan?matkhau=khop");
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email) redirect("/dang-nhap?next=/tai-khoan");
-  if (!(await passwordMatches(user.email, current))) redirect("/tai-khoan?matkhau=sai");
-
-  const { error } = await supabase.auth.updateUser({ password });
-  redirect(error ? "/tai-khoan?matkhau=loi" : "/tai-khoan?matkhau=ok");
-}
-
-const PASSWORD_MESSAGES: Record<string, [string, boolean]> = {
-  ok: ["Đã đổi mật khẩu.", true],
-  sai: ["Mật khẩu hiện tại không đúng.", false],
-  ngan: [`Mật khẩu cần ít nhất ${MIN_PASSWORD} ký tự.`, false],
-  khop: ["Hai mật khẩu không khớp.", false],
-  loi: ["Chưa đổi được mật khẩu, bạn thử lại nhé.", false],
-};
-
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ matkhau?: string }> }) {
-  const passwordMessage = PASSWORD_MESSAGES[(await searchParams).matkhau ?? ""];
+export default async function AccountPage() {
   const viewer = await getViewer();
   if (!viewer) redirect("/dang-nhap?next=/tai-khoan");
 
@@ -98,38 +60,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Đổi mật khẩu</h2>
-        <form action={changePassword} className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
-          <input
-            type="password"
-            name="current"
-            autoComplete="current-password"
-            placeholder="Mật khẩu hiện tại"
-            className="h-10 rounded-lg border border-border bg-bg px-3"
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            placeholder="Mật khẩu mới"
-            className="h-10 rounded-lg border border-border bg-bg px-3"
-            required
-          />
-          <input
-            type="password"
-            name="confirm"
-            autoComplete="new-password"
-            placeholder="Nhập lại"
-            className="h-10 rounded-lg border border-border bg-bg px-3"
-            required
-          />
-          <button type="submit" className="h-10 rounded-lg border border-border px-4 text-sm hover:border-accent">
-            Lưu
-          </button>
-        </form>
-        {passwordMessage && (
-          <p className={`mt-2 text-sm ${passwordMessage[1] ? "text-[#2f7a50]" : "text-[#b33a28]"}`}>{passwordMessage[0]}</p>
-        )}
+        <PasswordForm />
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
