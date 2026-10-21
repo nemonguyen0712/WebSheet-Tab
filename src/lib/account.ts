@@ -24,6 +24,7 @@ export function formatPhone(phone: string) {
   return local.replace(/^(\d{4})(\d{3})(\d+)$/, "$1 $2 $3");
 }
 
+/** Supabase's own minimum; any characters are allowed. */
 export const MIN_PASSWORD = 6;
 
 /** 3–20 lowercase letters, digits, "." or "_", with at least one letter (so it can't look like a phone number). */

@@ -34,7 +34,6 @@ async function changePassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   if (password.length < MIN_PASSWORD) redirect("/tai-khoan?matkhau=ngan");
   if (password !== String(formData.get("confirm") ?? "")) redirect("/tai-khoan?matkhau=khop");
-  if (password === current) redirect("/tai-khoan?matkhau=trung");
 
   const supabase = await createClient();
   const {
@@ -50,7 +49,6 @@ async function changePassword(formData: FormData) {
 const PASSWORD_MESSAGES: Record<string, [string, boolean]> = {
   ok: ["Đã đổi mật khẩu.", true],
   sai: ["Mật khẩu hiện tại không đúng.", false],
-  trung: ["Mật khẩu mới phải khác mật khẩu hiện tại.", false],
   ngan: [`Mật khẩu cần ít nhất ${MIN_PASSWORD} ký tự.`, false],
   khop: ["Hai mật khẩu không khớp.", false],
   loi: ["Chưa đổi được mật khẩu, bạn thử lại nhé.", false],
