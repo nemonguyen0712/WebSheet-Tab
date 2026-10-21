@@ -25,7 +25,14 @@ export default async function AccountPage() {
   const [{ data: devices }, { data: orders }] = admin
     ? await Promise.all([
         admin.from("devices").select("id, user_agent, last_seen").eq("user_id", viewer.id).order("last_seen", { ascending: false }),
-        admin.from("orders").select("order_code, plan, amount, status, created_at").eq("user_id", viewer.id).order("created_at", { ascending: false }).limit(20),
+        // Paid orders, plus unpaid ones still open for payment; cancelled ones mean nothing to the buyer.
+        admin
+          .from("orders")
+          .select("order_code, plan, amount, status, created_at, paid_at")
+          .eq("user_id", viewer.id)
+          .in("status", ["paid", "pending"])
+          .order("created_at", { ascending: false })
+          .limit(20),
       ])
     : [{ data: [] }, { data: [] }];
 
@@ -84,17 +91,35 @@ export default async function AccountPage() {
         <section className="rounded-2xl border border-border bg-surface p-5">
           <h2 className="font-semibold">Lịch sử thanh toán</h2>
           <ul className="mt-3 divide-y divide-border text-sm">
-            {orders.map((o) => (
-              <li key={o.order_code} className="flex items-center justify-between gap-3 py-2">
-                <span>
-                  #{o.order_code} · {getPlan(o.plan)?.label ?? o.plan} · {formatVnd(o.amount)}
-                </span>
-                <span className="flex items-center gap-2 text-muted">
-                  {formatDateTime(o.created_at)}
+            {orders.map((o) => {
+              const what = `#${o.order_code} · ${getPlan(o.plan)?.label ?? o.plan} · ${formatVnd(o.amount)}`;
+              return o.status === "pending" ? (
+                // Not paid yet: the row leads back to its QR / payment page.
+                <li key={o.order_code}>
+                  <Link
+                    href={`/thanh-toan/${o.order_code}`}
+                    className="-mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2 hover:bg-accent-soft"
+                  >
+                    <span>
+                      {what}
+                      <span className="block text-xs text-muted">Tạo lúc {formatDateTime(o.created_at)}</span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <StatusBadge status={o.status} />
+                      <span className="font-medium text-accent">Thanh toán →</span>
+                    </span>
+                  </Link>
+                </li>
+              ) : (
+                <li key={o.order_code} className="flex items-center justify-between gap-3 py-2">
+                  <span>
+                    {what}
+                    <span className="block text-xs text-muted">Đã trả lúc {formatDateTime(o.paid_at ?? o.created_at)}</span>
+                  </span>
                   <StatusBadge status={o.status} />
-                </span>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
