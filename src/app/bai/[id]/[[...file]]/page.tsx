@@ -38,17 +38,19 @@ export default async function SongPage({ params }: Props) {
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-28">
-      <div className="pt-4">
-        <Link href="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-accent">
-          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Tất cả bài
-        </Link>
-      </div>
+      <div className="mt-4 rounded-lg bg-surface/85 px-4 pb-4 pt-3 backdrop-blur-sm">
+        <div>
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-accent">
+            <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Tất cả bài
+          </Link>
+        </div>
 
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-balance sm:text-3xl">{song.title}</h1>
-      {sub && <p className="mt-1 text-muted">{sub}</p>}
+        <h1 className="mt-3 text-2xl font-bold tracking-tight text-balance sm:text-3xl">{song.title}</h1>
+        {sub && <p className="mt-1 text-muted">{sub}</p>}
+      </div>
 
       {song.files.length > 1 && (
         <nav className="mt-5" aria-label="Các file của bài">

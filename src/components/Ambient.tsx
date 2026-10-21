@@ -1,8 +1,9 @@
 /**
- * Soft background behind every page: a pre-blurred olive grove landscape (public/ambient.webp —
+ * Background behind every page: an olive grove landscape, colour-mapped to the site palette
+ * (forest green → olive → cream) and only lightly blurred (public/ambient.webp —
  * "a grove of olive trees in a field with mountains in the background", Unsplash, free licence:
  * https://unsplash.com/photos/a-grove-of-olive-trees-in-a-field-with-mountains-in-the-background-M6jXE5-WLKA),
- * washed with cream so content stays readable, and green glows that tie into the dark
+ * under a 20% cream wash, with green glows that tie into the dark
  * header strip and footer. Fixed, behind content, and ignores the pointer.
  */
 export function Ambient() {

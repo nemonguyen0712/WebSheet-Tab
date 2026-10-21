@@ -30,8 +30,10 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
-      <h1 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">Đăng ký</h1>
-      <p className="mt-2 text-center text-muted">Xem toàn bộ kho sheet/tab, bài mới được cập nhật liên tục.</p>
+      <div className="rounded-lg bg-surface/85 px-4 py-4 text-center backdrop-blur-sm">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Đăng ký</h1>
+        <p className="mt-2 text-muted">Xem toàn bộ kho sheet/tab, bài mới được cập nhật liên tục.</p>
+      </div>
       {viewer?.active && viewer.paidUntil && (
         <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-center text-sm">
           Gói của bạn còn hạn đến <b>{formatDate(viewer.paidUntil)}</b>. Mua thêm sẽ được cộng dồn.

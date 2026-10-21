@@ -198,7 +198,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2 text-sm">
-        <span className="text-muted">
+        <span className="rounded-md bg-surface/90 px-2.5 py-1 text-muted backdrop-blur-sm">
           {filtered ? `${results.length} / ${songs.length} bài` : `${songs.length} bài`}
         </span>
         <select
@@ -236,7 +236,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
         <div className="mt-3 grid items-start gap-6 md:grid-cols-2">
           {columnsOf(results, categories.map(([name]) => name)).map(([name, items]) => (
             <section key={name}>
-              <h2 className="mb-2 flex items-baseline gap-2 border-b-2 border-brass/40 pb-1.5 text-xl font-bold text-deep">
+              <h2 className="mb-2 flex items-baseline gap-2 rounded-md border-b-2 border-brass/50 bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">
                 {name}
                 <span className="font-sans text-sm font-normal text-muted">{items.length} bài</span>
               </h2>
