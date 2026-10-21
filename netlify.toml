@@ -1,6 +1,6 @@
-# Netlify detects Next.js automatically; this only pins the Node version.
+# Netlify detects Next.js automatically. A type error stops the deploy (the live site stays as is).
 [build]
-  command = "npm run build"
+  command = "npm run typecheck && npm run build"
 
 [build.environment]
   NODE_VERSION = "22"

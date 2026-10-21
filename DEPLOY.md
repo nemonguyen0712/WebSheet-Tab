@@ -94,6 +94,20 @@ Nếu build hoặc trang bị lỗi: Netlify → **Deploys** → bấm vào lầ
 
 ---
 
+## C2. CI/CD — tự kiểm tra & tự deploy
+
+Đã cài sẵn, không cần làm gì thêm ngoài 2 mục tick bên dưới:
+
+- **CI (GitHub Actions — `.github/workflows/ci.yml`)**: mỗi lần đẩy code lên `main` hoặc mở Pull Request, GitHub tự **kiểm tra lỗi TypeScript** và **build thử**. Xem kết quả ở tab **Actions** của repo (✅ / ❌).
+- **CD (Netlify)**: mỗi lần `main` có code mới, Netlify tự build và deploy. Netlify cũng chạy kiểm tra TypeScript trước khi build (`netlify.toml`); **build lỗi thì web vẫn giữ bản cũ đang chạy**, khách không bị ảnh hưởng.
+- **Quay về bản trước** nếu bản mới có vấn đề: Netlify → **Deploys** → chọn bản cũ → **Publish deploy**.
+
+Nên bật thêm:
+- [ ] **Deploy Preview** cho Pull Request: Netlify → Site configuration → Build & deploy → Branches and deploy contexts → **Deploy Previews: Any pull request**. Mỗi PR có link xem thử riêng trước khi gộp vào `main`.
+- [ ] (Tuỳ chọn) **Bắt buộc CI xanh mới được gộp PR**: GitHub repo → Settings → Branches → Add rule cho `main` → tick **Require status checks to pass** → chọn **check**.
+
+---
+
 ## D. Vận hành hằng ngày
 
 - **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web.
