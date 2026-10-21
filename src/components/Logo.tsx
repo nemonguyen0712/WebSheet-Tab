@@ -1,15 +1,15 @@
-/** Oliutab emblem: an olive sprig ("ô liu") across six tab strings, in the shared green & brass. */
+/** Oliu emblem: an olive sprig ("ô liu") across six tab strings, in the shared green & brass. */
 export function LogoMark({ className = "size-9" }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={className} aria-hidden>
       <defs>
-        <clipPath id="oliutab-inner">
+        <clipPath id="oliu-inner">
           <circle cx="20" cy="20" r="15.6" />
         </clipPath>
       </defs>
       <circle cx="20" cy="20" r="19" fill="#fcfaf3" stroke="#1f3d2b" strokeWidth="1.8" />
       <circle cx="20" cy="20" r="16.3" fill="none" stroke="#9c6b2f" strokeWidth="0.7" />
-      <g clipPath="url(#oliutab-inner)" stroke="#9c6b2f" strokeWidth="0.6" opacity="0.6">
+      <g clipPath="url(#oliu-inner)" stroke="#9c6b2f" strokeWidth="0.6" opacity="0.6">
         {[12.5, 15.5, 18.5, 21.5, 24.5, 27.5].map((y) => (
           <line key={y} x1="0" y1={y} x2="40" y2={y} />
         ))}

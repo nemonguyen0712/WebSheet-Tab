@@ -5,13 +5,13 @@ import type { Viewer } from "@/lib/viewer";
 /** Call to action shown over the blurred part of a preview. */
 export function Paywall({ viewer, returnTo }: { viewer: Viewer | null; returnTo: string }) {
   const cheapest = Math.min(...PLANS.map((p) => p.price));
-  let title = "Đăng ký để xem toàn bộ sheet/tab";
+  let title = "Đăng ký để xem toàn bộ sheet";
   let action = { href: `/dang-nhap?next=${encodeURIComponent(returnTo)}`, label: "Đăng nhập / Tạo tài khoản" };
   if (viewer && !viewer.deviceOk) {
     title = "Tài khoản của bạn vừa đăng nhập trên thiết bị khác";
     action = { href: `/dang-nhap?next=${encodeURIComponent(returnTo)}`, label: "Đăng nhập lại trên máy này" };
   } else if (viewer) {
-    title = viewer.paidUntil ? "Gói của bạn đã hết hạn" : "Đăng ký để xem toàn bộ sheet/tab";
+    title = viewer.paidUntil ? "Gói của bạn đã hết hạn" : "Đăng ký để xem toàn bộ sheet";
     action = { href: "/dang-ky", label: viewer.paidUntil ? "Gia hạn" : "Chọn gói" };
   }
 
@@ -22,7 +22,7 @@ export function Paywall({ viewer, returnTo }: { viewer: Viewer | null; returnTo:
         <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
       </svg>
       <p className="mt-2 font-semibold text-balance">{title}</p>
-      <p className="mt-1 text-sm text-muted">Toàn bộ kho tab, cập nhật liên tục — chỉ từ {formatVnd(cheapest)}/tháng.</p>
+      <p className="mt-1 text-sm text-muted">Toàn bộ kho Oliu, cập nhật liên tục — chỉ từ {formatVnd(cheapest)}/tháng.</p>
       <Link
         href={action.href}
         className="mt-4 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-5 font-medium text-accent-fg hover:opacity-90"

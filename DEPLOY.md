@@ -44,7 +44,7 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 
 ### 1. Chuẩn bị biến môi trường
 Trong `.env.local`, điền thêm (nếu chưa có):
-- `NEXT_PUBLIC_ZALO=` số Zalo hỗ trợ khách, ví dụ `0901234567`
+- `NEXT_PUBLIC_ZALO=` (không bắt buộc) số Zalo hỗ trợ khách. Mặc định đã là `0908928517`, chỉ điền khi muốn đổi số khác.
 
 Rồi chạy:
 ```bash
@@ -90,7 +90,7 @@ Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR
 
 Tiền vào tài khoản **VietinBank 0908928517 — HUYNH NHAT ANH** (đã cài sẵn trong code, muốn đổi tài khoản thì đặt `BANK_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`). Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
 
-1. Trên Netlify: đặt `PAYMENT_PROVIDER=manual` (hoặc xóa biến này đi, mặc định đã là `manual`) và điền `NEXT_PUBLIC_ZALO` để trang thanh toán có nút nhắn Zalo. Trigger deploy lại.
+1. Trên Netlify: đặt `PAYMENT_PROVIDER=manual` (hoặc xóa biến này đi, mặc định đã là `manual`) Trigger deploy lại. (Nút nhắn Zalo dùng số hỗ trợ `0908928517` có sẵn.)
 2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
 3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
    - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
@@ -127,7 +127,7 @@ Nên bật thêm:
 
 ## D. Vận hành hằng ngày
 
-- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web.
+- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web, ở trang **Oliu Solo** (`/solo`) hoặc **Oliu Melody** (`/melody`). Mỗi thư mục cấp 1 trên Drive là một mục như vậy trên trang chủ.
 - **Khách quên mật khẩu:** khách nhắn Zalo → `/admin` → tìm khách → nhập mật khẩu mới → **Đặt lại MK** → gửi mật khẩu cho khách và nhắc họ đổi lại.
 - **Khách chuyển khoản tay hoặc bạn muốn tặng ngày:** `/admin` → **+30 ngày**.
 - **File quá lớn (trên khoảng 6MB):** nén PDF hoặc ảnh trước khi up, vì Netlify không trả được file quá lớn.

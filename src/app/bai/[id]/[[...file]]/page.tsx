@@ -9,6 +9,7 @@ import { NotationViewer } from "@/components/viewers/NotationViewer";
 import { PdfViewer } from "@/components/viewers/PdfViewer";
 import { TextViewer } from "@/components/viewers/TextViewer";
 import { ViewerError } from "@/components/viewers/ViewerError";
+import { categorySlug, categoryTitle } from "@/lib/categories";
 import { fileLabel, songSubtitle } from "@/lib/kinds";
 import { formatPhone } from "@/lib/account";
 import { songHref } from "@/lib/links";
@@ -40,11 +41,14 @@ export default async function SongPage({ params }: Props) {
     <main className="mx-auto max-w-5xl px-4 pb-28">
       <div className="mt-4 rounded-lg bg-surface/85 px-4 pb-4 pt-3 backdrop-blur-sm">
         <div>
-          <Link href="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-accent">
+          <Link
+            href={song.category[0] ? `/${categorySlug(song.category[0])}` : "/"}
+            className="inline-flex items-center gap-1 text-sm text-muted hover:text-accent"
+          >
             <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Tất cả bài
+            {song.category[0] ? categoryTitle(song.category[0]) : "Tất cả bài"}
           </Link>
         </div>
 

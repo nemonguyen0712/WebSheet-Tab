@@ -43,10 +43,10 @@ export default async function PaymentPage({
             <p className="mt-6 text-4xl">🎉</p>
             <p className="mt-2 font-semibold">Thanh toán thành công!</p>
             {viewer.paidUntil && (
-              <p className="mt-1 text-muted">Bạn xem được toàn bộ kho tab đến {formatDate(viewer.paidUntil)}.</p>
+              <p className="mt-1 text-muted">Bạn xem được toàn bộ kho Oliu đến {formatDate(viewer.paidUntil)}.</p>
             )}
             <Link href="/" className="mt-6 inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg">
-              Vào xem tab
+              Vào xem bài
             </Link>
           </>
         )}
@@ -85,19 +85,20 @@ export default async function PaymentPage({
                   <Row label="Nội dung" value={note} highlight />
                 </dl>
                 {order.provider === "manual" ? (
-                  <p className="mt-3 text-sm text-muted">
-                    Nội dung chuyển khoản là số điện thoại tài khoản của bạn, giữ nguyên để mình đối chiếu. Chuyển xong
-                    {ZALO_URL ? (
-                      <>
-                        {" "}nhắn{" "}
-                        <a href={ZALO_URL} target="_blank" rel="noreferrer" className="font-medium text-accent underline">
-                          Zalo
-                        </a>{" "}
-                        cho mình
-                      </>
-                    ) : null}
-                    , gói sẽ được kích hoạt sau khi mình kiểm tra tiền về.
-                  </p>
+                  <>
+                    <p className="mt-3 text-sm text-muted">
+                      Nội dung chuyển khoản là số điện thoại tài khoản của bạn, giữ nguyên để mình đối chiếu. Chuyển xong nhắn
+                      Zalo cho mình, gói sẽ được kích hoạt sau khi mình kiểm tra tiền về.
+                    </p>
+                    <a
+                      href={ZALO_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-flex h-11 items-center rounded-xl bg-[#0068ff] px-5 font-medium text-white hover:opacity-90"
+                    >
+                      Nhắn Zalo báo đã chuyển khoản
+                    </a>
+                  </>
                 ) : (
                   <p className="mt-3 text-xs text-muted">Ghi đúng nội dung chuyển khoản để được kích hoạt tự động.</p>
                 )}
