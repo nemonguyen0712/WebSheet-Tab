@@ -1,3 +1,4 @@
+import { localPhone } from "../account";
 import { siteUrl } from "../origin";
 import { createAdminClient, supabaseConfigured } from "../supabase/server";
 import { payosCreateLink, payosGetLink } from "./payos";
@@ -8,13 +9,14 @@ import type { Plan } from "../plans";
  * - "payos": payOS hosted checkout page with VietQR; payOS calls /api/payments/payos when paid.
  * - "sepay": our own page shows a VietQR for your bank account; SePay watches the account and
  *   calls /api/payments/sepay when a transfer with the order code arrives.
- * - "manual": the same VietQR page, but you confirm each transfer yourself in /admin.
+ * - "manual" (default): the same VietQR page, with the buyer's phone number as the transfer note;
+ *   you match the transfer in your bank app and confirm the order yourself in /admin.
  */
 export type Provider = "payos" | "sepay" | "manual";
 
 export function paymentProvider(): Provider {
   const p = process.env.PAYMENT_PROVIDER;
-  return p === "sepay" || p === "manual" ? p : "payos";
+  return p === "payos" || p === "sepay" ? p : "manual";
 }
 
 /** Transfer note for an order; short because some banks cut notes at 9 characters. */
@@ -60,7 +62,7 @@ export async function startCheckout(user: { id: string; phone: string }, plan: P
       description: transferNote(orderCode),
       returnUrl: resultUrl,
       cancelUrl: `${resultUrl}?huy=1`,
-      buyerPhone: "0" + user.phone.slice(2),
+      buyerPhone: localPhone(user.phone),
     });
     await admin.from("orders").update({ checkout_url: checkoutUrl }).eq("order_code", orderCode);
     return checkoutUrl;
@@ -116,14 +118,17 @@ export function bankAccount() {
   };
 }
 
+/**
+ * What the buyer writes in the transfer: the order code in SePay mode (SePay matches it automatically),
+ * the buyer's own phone number in manual mode (easy to spot in the bank app and look up in /admin).
+ */
+export function bankTransferNote(order: Pick<Order, "order_code" | "provider">, buyerPhone: string) {
+  return order.provider === "manual" ? localPhone(buyerPhone) : transferNote(order.order_code);
+}
+
 /** VietQR image with the amount and transfer note filled in (SePay's free QR service, works for any bank). */
-export function bankQrUrl(order: Pick<Order, "order_code" | "amount">) {
+export function bankQrUrl(amount: number, note: string) {
   const { bank, number } = bankAccount();
-  const params = new URLSearchParams({
-    acc: number,
-    bank,
-    amount: String(order.amount),
-    des: transferNote(order.order_code),
-  });
+  const params = new URLSearchParams({ acc: number, bank, amount: String(amount), des: note });
   return `https://qr.sepay.vn/img?${params}`;
 }

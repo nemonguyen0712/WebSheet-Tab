@@ -83,10 +83,12 @@ Nếu build hoặc trang bị lỗi: Netlify → **Deploys** → bấm vào lầ
 
 ## C. Thu tiền vào VietinBank
 
-Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR **có sẵn số tiền và nội dung `TAB<mã đơn>`**, khách chỉ cần quét rồi bấm chuyển.
+Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR **có sẵn số tiền và nội dung chuyển khoản**, khách chỉ cần quét rồi bấm chuyển.
 (payOS không liên kết được VietinBank. Nếu sau này đổi sang ngân hàng payOS hỗ trợ, xem README mục 3.)
 
-### Cách 1: chuyển khoản tay (0đ, bắt đầu ngay)
+### Cách 1: chuyển khoản tay (mặc định, 0đ)
+
+Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
 
 1. Thêm vào `.env.local`, rồi chạy lại `npm run netlify-env` và import lên Netlify (hoặc thêm tay trên Netlify). Trigger deploy lại.
    ```
@@ -96,9 +98,9 @@ Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR
    BANK_ACCOUNT_NAME=HUYNH NHAT ANH
    ```
    Nhớ điền `NEXT_PUBLIC_ZALO` để trang thanh toán có nút nhắn Zalo.
-2. Khi khách nhắn đã chuyển: mở app VietinBank, thấy khoản **20.000đ** với nội dung `TAB<mã đơn>` → vào `/admin` → **Đơn gần đây** → bấm **Đã nhận tiền** ở đúng đơn đó. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
+2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
 3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
-   - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung `TAB…`.
+   - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
    - [ ] Bấm **Đã nhận tiền** trong `/admin`, trang thanh toán của khách tự chuyển sang "Thanh toán thành công".
    - [ ] Trang Tài khoản hiện hạn dùng thêm 30 ngày, `/admin` thấy doanh thu tăng.
 
@@ -111,7 +113,7 @@ SePay theo dõi tài khoản VietinBank và báo về web khi có khoản chuy�
    - URL: `https://<site của bạn>/api/payments/sepay`
    - Sự kiện: **Tiền vào**
    - Kiểu xác thực: **API Key**, tự đặt một chuỗi dài ngẫu nhiên và ghi lại.
-3. Giữ các biến `BANK_*` ở cách 1, đổi `PAYMENT_PROVIDER=sepay` và thêm `SEPAY_API_KEY=<chuỗi ở bước 2>` (tick **Contains secret values**). Trigger deploy lại.
+3. Giữ các biến `BANK_*` ở cách 1, đổi `PAYMENT_PROVIDER=sepay` (nội dung chuyển khoản sẽ đổi thành `TAB<mã đơn>` để SePay tự nhận ra đơn) và thêm `SEPAY_API_KEY=<chuỗi ở bước 2>` (tick **Contains secret values**). Trigger deploy lại.
 4. Mua thử: trả xong, web tự báo "Thanh toán thành công" mà không cần bấm gì trong `/admin`.
 
 ---

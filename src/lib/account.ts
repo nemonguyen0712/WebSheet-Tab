@@ -18,10 +18,14 @@ export function normalizePhone(input: string): string | null {
   return /^84[35789]\d{8}$/.test(digits) ? digits : null;
 }
 
+/** "84901234567" → "0901234567" */
+export function localPhone(phone: string) {
+  return phone.startsWith("84") ? "0" + phone.slice(2) : phone;
+}
+
 /** "84901234567" → "0901 234 567" */
 export function formatPhone(phone: string) {
-  const local = phone.startsWith("84") ? "0" + phone.slice(2) : phone;
-  return local.replace(/^(\d{4})(\d{3})(\d+)$/, "$1 $2 $3");
+  return localPhone(phone).replace(/^(\d{4})(\d{3})(\d+)$/, "$1 $2 $3");
 }
 
 /** Supabase's own minimum; any characters are allowed. */

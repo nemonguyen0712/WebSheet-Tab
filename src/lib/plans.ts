@@ -16,6 +16,13 @@ export function formatVnd(n: number) {
   return `${n.toLocaleString("vi-VN")}đ`;
 }
 
+/** "14:32 21/10/2026" (Vietnam time), for matching orders against the bank app. */
+export function formatDateTime(iso: string) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
+  return `${time} ${formatDate(iso)}`;
+}
+
 export function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
 }

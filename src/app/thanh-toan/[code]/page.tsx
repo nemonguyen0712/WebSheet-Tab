@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { bankAccount, bankQrUrl, getOrder, refreshOrder, transferNote } from "@/lib/payments";
-import { formatDate, formatVnd, getPlan } from "@/lib/plans";
+import { bankAccount, bankQrUrl, bankTransferNote, getOrder, refreshOrder } from "@/lib/payments";
+import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { ZALO_URL } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
 import { OrderPoller } from "./OrderPoller";
@@ -26,11 +26,14 @@ export default async function PaymentPage({
   const order = await refreshOrder(found);
   const plan = getPlan(order.plan);
   const bank = bankAccount();
+  const note = bankTransferNote(order, viewer.phone);
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
       <div className="rounded-2xl border border-border bg-surface p-6 text-center">
-        <p className="text-sm text-muted">Đơn #{order.order_code}</p>
+        <p className="text-sm text-muted">
+          Đơn #{order.order_code} · tạo lúc {formatDateTime(order.created_at)}
+        </p>
         <h1 className="mt-1 text-xl font-bold">
           Gói {plan?.label ?? order.plan} · {formatVnd(order.amount)}
         </h1>
@@ -73,26 +76,27 @@ export default async function PaymentPage({
               <>
                 <p className="mt-4 text-sm text-muted">Quét mã bằng app ngân hàng bất kỳ (đã có sẵn số tiền và nội dung):</p>
                 {/* eslint-disable-next-line @next/next/no-img-element -- VietQR image from SePay */}
-                <img src={bankQrUrl(order)} alt="Mã VietQR" className="mx-auto mt-3 w-64 rounded-lg bg-white p-2" />
+                <img src={bankQrUrl(order.amount, note)} alt="Mã VietQR" className="mx-auto mt-3 w-64 rounded-lg bg-white p-2" />
                 <dl className="mt-4 space-y-1 text-left text-sm">
                   <Row label="Ngân hàng" value={bank.bank} />
                   <Row label="Số tài khoản" value={bank.number} />
                   {bank.name && <Row label="Chủ tài khoản" value={bank.name} />}
                   <Row label="Số tiền" value={formatVnd(order.amount)} />
-                  <Row label="Nội dung" value={transferNote(order.order_code)} highlight />
+                  <Row label="Nội dung" value={note} highlight />
                 </dl>
                 {order.provider === "manual" ? (
                   <p className="mt-3 text-sm text-muted">
-                    Chuyển khoản xong, nhắn mình mã đơn <b>#{order.order_code}</b>
+                    Nội dung chuyển khoản là số điện thoại tài khoản của bạn, giữ nguyên để mình đối chiếu. Chuyển xong
                     {ZALO_URL ? (
                       <>
-                        {" "}qua{" "}
+                        {" "}nhắn{" "}
                         <a href={ZALO_URL} target="_blank" rel="noreferrer" className="font-medium text-accent underline">
                           Zalo
-                        </a>
+                        </a>{" "}
+                        cho mình
                       </>
-                    ) : null}{" "}
-                    để được kích hoạt.
+                    ) : null}
+                    , gói sẽ được kích hoạt sau khi mình kiểm tra tiền về.
                   </p>
                 ) : (
                   <p className="mt-3 text-xs text-muted">Ghi đúng nội dung chuyển khoản để được kích hoạt tự động.</p>

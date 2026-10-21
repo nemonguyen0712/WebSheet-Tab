@@ -13,7 +13,7 @@ const env = Object.fromEntries(
 const raw = env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "";
 const key = raw ? JSON.parse(raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8")) : null;
 
-const provider = ["sepay", "manual"].includes(env.PAYMENT_PROVIDER) ? env.PAYMENT_PROVIDER : "payos";
+const provider = ["payos", "sepay"].includes(env.PAYMENT_PROVIDER) ? env.PAYMENT_PROVIDER : "manual";
 
 const out = {
   DRIVE_FOLDER_ID: env.DRIVE_FOLDER_ID,
