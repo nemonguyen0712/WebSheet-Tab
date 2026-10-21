@@ -91,7 +91,7 @@ Cần có `.env.local` với cấu hình Drive và Supabase (xem `.env.example`)
 
 ## Ghi chú
 
-- **Gia hạn:** không tự động. Mua thêm thì thời hạn được cộng dồn.
+- **Gia hạn:** không tự động. Khách bấm gia hạn thì thời hạn được cộng nối tiếp. Mỗi khách chỉ có tối đa 1 đơn chờ thanh toán: bấm mua lại thì mở lại đơn đó, không tạo đơn mới.
 - **Khi webhook bị trễ:** trang thanh toán tự hỏi lại payOS, nên người dùng vẫn được kích hoạt.
 - **Bảo vệ nội dung:**
   - File gửi cho người đã trả phí luôn được **in tên đăng nhập + số điện thoại** vào bên trong: chữ mờ trên từng trang PDF và trên ảnh, dòng "Bản cấp cho…" trong tab Guitar Pro. Lưu file về được thì file vẫn mang tên họ.

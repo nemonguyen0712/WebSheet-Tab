@@ -42,10 +42,33 @@ export interface Order {
   paid_at: string | null;
 }
 
-/** Creates an order and returns where to send the buyer to pay. */
+/**
+ * Returns where to send the buyer to pay. A buyer has at most one unpaid order: buying again
+ * reopens it instead of creating another, so /admin never shows duplicates to match against.
+ */
 export async function startCheckout(user: { id: string; phone: string }, plan: Plan): Promise<string> {
   const provider = paymentProvider();
   const admin = createAdminClient();
+
+  const { data: pending } = await admin
+    .from("orders")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+  for (const old of (pending ?? []) as Order[]) {
+    const fresh = await refreshOrder(old);
+    if (fresh.status !== "pending") continue;
+    const reusable = fresh.provider === provider && fresh.plan === plan.id && fresh.amount === plan.price;
+    if (reusable && provider !== "payos") return `${await siteUrl()}/thanh-toan/${fresh.order_code}`;
+    if (reusable && fresh.checkout_url) return fresh.checkout_url;
+    // Left over from another payment mode or an old price. A manual one stays open (the money may
+    // already be in the bank, waiting for you to confirm); an automatic one unpaid by now is dead.
+    if (fresh.provider !== "manual") {
+      await admin.from("orders").update({ status: "cancelled" }).eq("order_code", fresh.order_code).eq("status", "pending");
+    }
+  }
+
   const { data: order, error } = await admin
     .from("orders")
     .insert({ user_id: user.id, plan: plan.id, days: plan.days, amount: plan.price, provider })
@@ -79,6 +102,20 @@ export async function markPaid(orderCode: number, amount: number, ref: string): 
   });
   if (error) throw error;
   return Boolean(data);
+}
+
+/** The buyer's open order, if any (shown on the pricing page as "continue paying"). */
+export async function getPendingOrder(userId: string): Promise<Order | null> {
+  if (!supabaseConfigured()) return null;
+  const { data } = await createAdminClient()
+    .from("orders")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as Order | null) ?? null;
 }
 
 export async function getOrder(orderCode: number): Promise<Order | null> {

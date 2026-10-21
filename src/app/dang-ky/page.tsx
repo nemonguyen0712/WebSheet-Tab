@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { startCheckout } from "@/lib/payments";
-import { PLANS, formatDate, formatVnd, getPlan } from "@/lib/plans";
+import { getPendingOrder, paymentProvider, startCheckout } from "@/lib/payments";
+import { PLANS, formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Đăng ký" };
@@ -27,6 +27,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
   const { loi } = await searchParams;
   const viewer = await getViewer();
   const plan = PLANS[0];
+  const pending = viewer ? await getPendingOrder(viewer.id) : null;
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -36,7 +37,13 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
       </div>
       {viewer?.active && viewer.paidUntil && (
         <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-center text-sm">
-          Gói của bạn còn hạn đến <b>{formatDate(viewer.paidUntil)}</b>. Mua thêm sẽ được cộng dồn.
+          Gói của bạn còn hạn đến <b>{formatDate(viewer.paidUntil)}</b>. Gia hạn thì 30 ngày mới được cộng nối tiếp vào hạn hiện tại.
+        </p>
+      )}
+      {pending && (
+        <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-center text-sm">
+          Bạn có đơn <b>#{pending.order_code}</b> tạo lúc {formatDateTime(pending.created_at)} đang chờ thanh toán. Bấm nút bên
+          dưới để mở lại đơn đó, không tạo đơn mới.
         </p>
       )}
       {loi && (
@@ -56,9 +63,13 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
           <li>✓ Không tự gia hạn — hết hạn thì mua tiếp khi cần</li>
         </ul>
         <button type="submit" className="mt-6 h-12 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90">
-          {viewer ? "Thanh toán bằng VietQR" : "Đăng nhập để mua"}
+          {!viewer ? "Đăng nhập để mua" : pending ? "Tiếp tục thanh toán" : viewer.active ? "Gia hạn bằng VietQR" : "Thanh toán bằng VietQR"}
         </button>
-        <p className="mt-3 text-xs text-muted">Quét mã bằng app ngân hàng bất kỳ, kích hoạt tự động sau khi chuyển khoản.</p>
+        <p className="mt-3 text-xs text-muted">
+          {paymentProvider() === "manual"
+            ? "Quét mã bằng app ngân hàng bất kỳ, gói được kích hoạt sau khi mình kiểm tra tiền về."
+            : "Quét mã bằng app ngân hàng bất kỳ, kích hoạt tự động sau khi chuyển khoản."}
+        </p>
       </form>
 
       <p className="mt-6 text-center text-sm">
