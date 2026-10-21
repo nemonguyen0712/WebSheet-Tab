@@ -10,7 +10,7 @@ import { checkPhone, createAccount, loginEmail } from "./actions";
 type Mode = "login" | "signup";
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-border bg-bg px-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
+  "h-10 w-full rounded-xl border border-border bg-bg px-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function LoginForm({ next, initialMode }: { next: string; initialMode: Mode }) {
   const router = useRouter();
@@ -97,7 +97,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
     <button
       type="submit"
       disabled={busy}
-      className="h-11 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+      className="h-10 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
     >
       {busy ? "Đang xử lý…" : label}
     </button>
@@ -112,7 +112,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            className={`h-9 rounded-lg ${mode === m ? "bg-accent text-accent-fg shadow-sm" : "text-muted"}`}
+            className={`h-8 rounded-lg ${mode === m ? "bg-accent text-accent-fg shadow-sm" : "text-muted"}`}
           >
             {m === "login" ? "Đăng nhập" : "Tạo tài khoản"}
           </button>
@@ -120,7 +120,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       </div>
 
       {mode === "login" && (
-        <form onSubmit={onLogin} className="mt-4 space-y-2.5 text-left">
+        <form onSubmit={onLogin} className="mt-3 space-y-2 text-left">
           <label className="block">
             <span className="sr-only">Tên đăng nhập hoặc số điện thoại</span>
             <input
@@ -147,7 +147,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
           </label>
           {errorLine}
           {submitButton("Đăng nhập")}
-          <p className="text-center text-sm text-muted">
+          <p className="text-center text-xs text-muted">
             Quên mật khẩu?{" "}
             <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
               Nhắn Zalo để được đặt lại
@@ -157,7 +157,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       )}
 
       {mode === "signup" && !phone && (
-        <form onSubmit={onPhoneStep} className="mt-4 space-y-2.5 text-left">
+        <form onSubmit={onPhoneStep} className="mt-3 space-y-2 text-left">
           <p className="text-sm font-medium">Bước 1/2 · Số điện thoại</p>
           <label className="block">
             <span className="sr-only">Số điện thoại</span>
@@ -178,7 +178,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       )}
 
       {mode === "signup" && phone && (
-        <form onSubmit={onCreate} className="mt-4 space-y-2.5 text-left">
+        <form onSubmit={onCreate} className="mt-3 space-y-2 text-left">
           <div className="flex items-center justify-between gap-2 text-sm">
             <span className="font-medium">Bước 2/2 · Tên đăng nhập & mật khẩu</span>
             <button

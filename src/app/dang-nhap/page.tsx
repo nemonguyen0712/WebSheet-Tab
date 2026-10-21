@@ -18,8 +18,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     // Starts just below the OLIU wordmark of the background photo (see .below-backdrop-logo). A fixed,
     // one-screen page (see .auth-screen): the panel stays compact and scrolls inside itself if a phone is too short.
-    <main className="below-backdrop-logo auth-screen mx-auto h-full max-w-sm px-4 pb-4">
-      <div className="oliu-dark max-h-full overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-center shadow-2xl backdrop-blur-md">
+    <main className="below-backdrop-logo auth-screen mx-auto h-full max-w-sm px-4 pb-2">
+      <div className="oliu-dark max-h-full overflow-y-auto rounded-2xl border border-border bg-surface p-3 text-center shadow-2xl backdrop-blur-md">
         {/* The Đăng nhập / Tạo tài khoản tabs already say it; the heading stays for screen readers. */}
         <h1 className="sr-only">{moi ? "Tạo tài khoản" : "Đăng nhập"}</h1>
         {viewer && !viewer.deviceOk && (

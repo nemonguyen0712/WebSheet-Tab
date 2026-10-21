@@ -66,7 +66,9 @@ body {
  * the wordmark ends at ~62% of its height; start at ~63% (above the "TAB & SHEET" line), minus the 56px header.
  */
 .below-backdrop-logo {
-  padding-top: calc(50vh + 0.128 * max(56.28vw, 100vh) - 48px);
+  /* Below the "TAB & SHEET" line (ends at ~69% of the photo), but on short screens no lower than leaves
+     room for the ~240px login panel above the bottom edge. */
+  padding-top: min(calc(50vh + 0.195 * max(56.28vw, 100vh) - 56px), calc(100dvh - 56px - 250px));
 }
 
 /* Login: exactly one screen — no page scroll and no footer, so the photo and the panel stay put. */
