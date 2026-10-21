@@ -63,15 +63,19 @@ body {
     radial-gradient(45rem 32rem at 0% 55%, rgb(47 90 64 / 0.1), transparent 70%),
     radial-gradient(80rem 30rem at 50% calc(100% + 8rem), rgb(22 41 29 / 0.26), transparent 70%);
 }
-.ambient-strings {
-  /* Six faint "tab strings", repeated down the page. */
-  background-image: repeating-linear-gradient(
+.ambient-photo {
+  background: url("/ambient.webp") center / cover no-repeat;
+  opacity: 0.55;
+  transform: scale(1.05); /* hide the soft edges left by blurring */
+}
+.ambient-wash {
+  background: linear-gradient(
     to bottom,
-    transparent 0 23px,
-    rgb(156 107 47 / 0.07) 23px 24px,
-    transparent 24px 36px
+    rgb(245 241 230 / 0.45),
+    rgb(245 241 230 / 0.68) 35%,
+    rgb(245 241 230 / 0.68) 70%,
+    rgb(245 241 230 / 0.5)
   );
-  mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
 }
 
 h1,

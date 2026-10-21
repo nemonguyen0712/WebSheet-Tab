@@ -90,7 +90,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
       const top = i.song.category[0];
       if (top) counts.set(top, (counts.get(top) ?? 0) + 1);
     }
-    return [...counts].sort(([a], [b]) => collator.compare(a, b));
+    return [...counts].sort(([a], [b]) => categoryRank(a) - categoryRank(b) || collator.compare(a, b));
   }, [indexed]);
 
   const kindCounts = useMemo(() => {
@@ -242,7 +242,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
               </h2>
               <ul className="grid gap-2">
                 {items.map((r) => (
-                  <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} />
+                  <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn />
                 ))}
               </ul>
             </section>
@@ -261,14 +261,15 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
 
 type Result = { i: Indexed; matchedFile: Indexed["files"][number] | null };
 
-/** Solo first, then Melody, then other folders A→Z; songs outside any folder go under "Khác". */
+/** Solo first, then Melody, then other folders A→Z. */
+function categoryRank(name: string) {
+  const f = fold(name);
+  return f === "solo" ? 0 : f === "melody" ? 1 : 2;
+}
+
+/** One group per category (already in display order); songs outside any folder go under "Khác". */
 function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
-  const rank = (n: string) => {
-    const f = fold(n);
-    return f === "solo" ? 0 : f === "melody" ? 1 : 2;
-  };
-  const order = [...names].sort((a, b) => rank(a) - rank(b) || collator.compare(a, b));
-  const groups = new Map<string, Result[]>(order.map((n) => [n, []]));
+  const groups = new Map<string, Result[]>(names.map((n) => [n, []]));
   for (const r of results) {
     const key = r.i.song.category[0] ?? "Khác";
     if (!groups.has(key)) groups.set(key, []);
@@ -277,8 +278,9 @@ function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
   return [...groups].filter(([, items]) => items.length > 0);
 }
 
-function SongCard({ i, matchedFile, newCutoff }: Result & { newCutoff: number }) {
-  const sub = songSubtitle(i.song);
+function SongCard({ i, matchedFile, newCutoff, inColumn }: Result & { newCutoff: number; inColumn?: boolean }) {
+  // Inside a Solo / Melody column the category is already the column title.
+  const sub = songSubtitle(inColumn ? { ...i.song, category: i.song.category.slice(1) } : i.song);
   return (
     <li>
       <Link
