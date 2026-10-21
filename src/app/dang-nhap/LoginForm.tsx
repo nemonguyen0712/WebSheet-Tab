@@ -10,7 +10,7 @@ import { checkPhone, createAccount, loginEmail } from "./actions";
 type Mode = "login" | "signup";
 
 const inputClass =
-  "mt-1 h-12 w-full rounded-xl border border-border bg-bg px-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
+  "h-11 w-full rounded-xl border border-border bg-bg px-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 export function LoginForm({ next, initialMode }: { next: string; initialMode: Mode }) {
   const router = useRouter();
@@ -97,7 +97,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
     <button
       type="submit"
       disabled={busy}
-      className="h-12 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
+      className="h-11 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:opacity-60"
     >
       {busy ? "Đang xử lý…" : label}
     </button>
@@ -112,7 +112,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            className={`h-10 rounded-lg ${mode === m ? "bg-accent text-accent-fg shadow-sm" : "text-muted"}`}
+            className={`h-9 rounded-lg ${mode === m ? "bg-accent text-accent-fg shadow-sm" : "text-muted"}`}
           >
             {m === "login" ? "Đăng nhập" : "Tạo tài khoản"}
           </button>
@@ -120,25 +120,27 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       </div>
 
       {mode === "login" && (
-        <form onSubmit={onLogin} className="mt-5 space-y-3 text-left">
+        <form onSubmit={onLogin} className="mt-4 space-y-2.5 text-left">
           <label className="block">
-            <span className="text-sm text-muted">Tên đăng nhập hoặc số điện thoại</span>
+            <span className="sr-only">Tên đăng nhập hoặc số điện thoại</span>
             <input
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               autoComplete="username"
               autoCapitalize="none"
+              placeholder="Tên đăng nhập hoặc số điện thoại"
               className={inputClass}
               required
             />
           </label>
           <label className="block">
-            <span className="text-sm text-muted">Mật khẩu</span>
+            <span className="sr-only">Mật khẩu</span>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
+              placeholder="Mật khẩu"
               className={inputClass}
               required
             />
@@ -155,17 +157,17 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       )}
 
       {mode === "signup" && !phone && (
-        <form onSubmit={onPhoneStep} className="mt-5 space-y-3 text-left">
+        <form onSubmit={onPhoneStep} className="mt-4 space-y-2.5 text-left">
           <p className="text-sm font-medium">Bước 1/2 · Số điện thoại</p>
           <label className="block">
-            <span className="text-sm text-muted">Số điện thoại</span>
+            <span className="sr-only">Số điện thoại</span>
             <input
               type="tel"
               inputMode="tel"
               autoComplete="tel"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
-              placeholder="0901 234 567"
+              placeholder="Số điện thoại (vd: 0901 234 567)"
               className={inputClass}
               required
             />
@@ -176,7 +178,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       )}
 
       {mode === "signup" && phone && (
-        <form onSubmit={onCreate} className="mt-5 space-y-3 text-left">
+        <form onSubmit={onCreate} className="mt-4 space-y-2.5 text-left">
           <div className="flex items-center justify-between gap-2 text-sm">
             <span className="font-medium">Bước 2/2 · Tên đăng nhập & mật khẩu</span>
             <button
@@ -194,36 +196,38 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
             Số điện thoại: <b>{formatPhone(phone)}</b>
           </p>
           <label className="block">
-            <span className="text-sm text-muted">Tên đăng nhập</span>
+            <span className="sr-only">Tên đăng nhập</span>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
               autoComplete="username"
               autoCapitalize="none"
-              placeholder="vd: nam.guitar"
+              placeholder="Tên đăng nhập (vd: nam.guitar)"
               className={inputClass}
               required
             />
             <span className="mt-1 block text-xs text-muted">{USERNAME_RULES}</span>
           </label>
           <label className="block">
-            <span className="text-sm text-muted">Mật khẩu</span>
+            <span className="sr-only">Mật khẩu</span>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
+              placeholder="Mật khẩu"
               className={inputClass}
               required
             />
           </label>
           <label className="block">
-            <span className="text-sm text-muted">Nhập lại mật khẩu</span>
+            <span className="sr-only">Nhập lại mật khẩu</span>
             <input
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               autoComplete="new-password"
+              placeholder="Nhập lại mật khẩu"
               className={inputClass}
               required
             />

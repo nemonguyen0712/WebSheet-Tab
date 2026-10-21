@@ -69,6 +69,18 @@ body {
   padding-top: calc(50vh + 0.128 * max(56.28vw, 100vh) - 48px);
 }
 
+/* Login: exactly one screen — no page scroll and no footer, so the photo and the panel stay put. */
+body:has(.auth-screen) {
+  height: 100dvh;
+  overflow: hidden;
+}
+body:has(.auth-screen) > div {
+  min-height: 0;
+}
+body:has(.auth-screen) > footer {
+  display: none;
+}
+
 /* Dark olive & gold panel matching the background photo: re-points the palette for its contents. */
 .oliu-dark {
   --bg: rgb(10 9 6 / 0.55);

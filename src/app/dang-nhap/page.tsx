@@ -16,19 +16,20 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (viewer?.deviceOk) redirect(safePath(next));
 
   return (
-    // Starts just below the OLIU wordmark of the background photo (see .below-backdrop-logo).
-    <main className="below-backdrop-logo mx-auto max-w-md px-4 pb-10">
-      <div className="oliu-dark rounded-2xl border border-border bg-surface p-6 text-center shadow-2xl backdrop-blur-md">
-        <h1 className="text-2xl font-bold tracking-tight">{moi ? "Tạo tài khoản" : "Đăng nhập"}</h1>
-        <p className="mt-2 text-muted">Tài khoản theo số điện thoại, không cần email.</p>
+    // Starts just below the OLIU wordmark of the background photo (see .below-backdrop-logo). A fixed,
+    // one-screen page (see .auth-screen): the panel stays compact and scrolls inside itself if a phone is too short.
+    <main className="below-backdrop-logo auth-screen mx-auto h-full max-w-sm px-4 pb-4">
+      <div className="oliu-dark max-h-full overflow-y-auto rounded-2xl border border-border bg-surface p-4 text-center shadow-2xl backdrop-blur-md">
+        {/* The Đăng nhập / Tạo tài khoản tabs already say it; the heading stays for screen readers. */}
+        <h1 className="sr-only">{moi ? "Tạo tài khoản" : "Đăng nhập"}</h1>
         {viewer && !viewer.deviceOk && (
-          <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-sm">
+          <p className="mb-3 rounded-lg bg-accent-soft px-3 py-2 text-sm">
             {MAX_DEVICES === 1
               ? "Mỗi tài khoản chỉ dùng được 1 thiết bị. Đăng nhập ở đây sẽ đăng xuất thiết bị đang dùng."
               : `Mỗi tài khoản dùng được tối đa ${MAX_DEVICES} thiết bị. Đăng nhập ở đây sẽ đăng xuất thiết bị cũ nhất.`}
           </p>
         )}
-        <div className="mt-6">
+        <div>
           {supabaseConfigured() ? (
             <LoginForm next={safePath(next)} initialMode={moi ? "signup" : "login"} />
           ) : (
