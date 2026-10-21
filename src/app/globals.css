@@ -64,7 +64,7 @@ body {
     radial-gradient(80rem 30rem at 50% calc(100% + 8rem), rgb(22 41 29 / 0.26), transparent 70%);
 }
 .ambient-photo {
-  background: url("/ambient.webp?v=3") center / cover no-repeat;
+  background: url("/ambient.webp?v=4") center / cover no-repeat;
   opacity: 0.55;
   transform: scale(1.05); /* hide the soft edges left by blurring */
 }
