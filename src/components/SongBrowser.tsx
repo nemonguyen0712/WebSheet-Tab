@@ -133,7 +133,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
 
   return (
     <div>
-      <div className="sticky top-14 z-20 -mx-4 space-y-2.5 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
+      <div className="sticky top-14 z-20 -mx-4 space-y-2.5 border-b border-border/70 bg-bg/80 px-4 pb-3 pt-3 backdrop-blur-md">
         <label className="relative block">
           <span className="sr-only">Tìm bài</span>
           <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -213,7 +213,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
       </div>
 
       {results.length === 0 ? (
-        <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface py-14 text-center text-muted">
+        <div className="mt-3 rounded-lg border border-dashed border-border bg-surface/80 py-14 text-center text-muted">
           {songs.length === 0 ? "Chưa có bài nào." : "Không tìm thấy bài nào khớp."}
           {filtered && songs.length > 0 && (
             <div className="mt-3">
@@ -231,38 +231,77 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
             </div>
           )}
         </div>
+      ) : categories.length > 0 && !category ? (
+        // One column per top-level folder (Solo | Melody), side by side on wider screens.
+        <div className="mt-3 grid items-start gap-6 md:grid-cols-2">
+          {columnsOf(results, categories.map(([name]) => name)).map(([name, items]) => (
+            <section key={name}>
+              <h2 className="mb-2 flex items-baseline gap-2 border-b-2 border-brass/40 pb-1.5 text-xl font-bold text-deep">
+                {name}
+                <span className="font-sans text-sm font-normal text-muted">{items.length} bài</span>
+              </h2>
+              <ul className="grid gap-2">
+                {items.map((r) => (
+                  <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
       ) : (
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {results.map(({ i, matchedFile }) => {
-            const sub = songSubtitle(i.song);
-            return (
-              <li key={i.song.id}>
-                <Link
-                  href={songHref(i.song, matchedFile?.file)}
-                  className="flex h-full flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition hover:border-brass active:scale-[0.99]"
-                >
-                  <div className="flex items-start gap-2">
-                    <span className="line-clamp-2 flex-1 font-semibold leading-snug text-deep">{i.song.title}</span>
-                    {i.modified > newCutoff && (
-                      <span className="mt-0.5 shrink-0 rounded-sm border border-[#e9d2a8] bg-brass-soft px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brass">
-                        Mới
-                      </span>
-                    )}
-                  </div>
-                  {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
-                  {matchedFile && <div className="-mt-1 truncate text-sm text-brass">↳ {matchedFile.label}</div>}
-                  <div className="mt-auto flex flex-wrap gap-1">
-                    {KIND_ORDER.filter((k) => i.kinds.has(k)).map((k) => (
-                      <KindBadge key={k} kind={k} count={i.kinds.get(k)} />
-                    ))}
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
+          {results.map((r) => (
+            <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} />
+          ))}
         </ul>
       )}
     </div>
+  );
+}
+
+type Result = { i: Indexed; matchedFile: Indexed["files"][number] | null };
+
+/** Solo first, then Melody, then other folders A→Z; songs outside any folder go under "Khác". */
+function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
+  const rank = (n: string) => {
+    const f = fold(n);
+    return f === "solo" ? 0 : f === "melody" ? 1 : 2;
+  };
+  const order = [...names].sort((a, b) => rank(a) - rank(b) || collator.compare(a, b));
+  const groups = new Map<string, Result[]>(order.map((n) => [n, []]));
+  for (const r of results) {
+    const key = r.i.song.category[0] ?? "Khác";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+  return [...groups].filter(([, items]) => items.length > 0);
+}
+
+function SongCard({ i, matchedFile, newCutoff }: Result & { newCutoff: number }) {
+  const sub = songSubtitle(i.song);
+  return (
+    <li>
+      <Link
+        href={songHref(i.song, matchedFile?.file)}
+        className="flex h-full flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition hover:border-brass active:scale-[0.99]"
+      >
+        <div className="flex items-start gap-2">
+          <span className="line-clamp-2 flex-1 font-semibold leading-snug text-deep">{i.song.title}</span>
+          {i.modified > newCutoff && (
+            <span className="mt-0.5 shrink-0 rounded-sm border border-[#e9d2a8] bg-brass-soft px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brass">
+              Mới
+            </span>
+          )}
+        </div>
+        {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
+        {matchedFile && <div className="-mt-1 truncate text-sm text-brass">↳ {matchedFile.label}</div>}
+        <div className="mt-auto flex flex-wrap gap-1">
+          {KIND_ORDER.filter((k) => i.kinds.has(k)).map((k) => (
+            <KindBadge key={k} kind={k} count={i.kinds.get(k)} />
+          ))}
+        </div>
+      </Link>
+    </li>
   );
 }
 

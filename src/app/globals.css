@@ -55,6 +55,25 @@ body {
   color: var(--fg);
 }
 
+/* Ambient background (see components/Ambient.tsx). */
+.ambient-glow {
+  background:
+    radial-gradient(70rem 30rem at 50% -8rem, rgb(31 61 43 / 0.22), transparent 70%),
+    radial-gradient(40rem 30rem at 100% 15%, rgb(156 107 47 / 0.14), transparent 70%),
+    radial-gradient(45rem 32rem at 0% 55%, rgb(47 90 64 / 0.1), transparent 70%),
+    radial-gradient(80rem 30rem at 50% calc(100% + 8rem), rgb(22 41 29 / 0.26), transparent 70%);
+}
+.ambient-strings {
+  /* Six faint "tab strings", repeated down the page. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 23px,
+    rgb(156 107 47 / 0.07) 23px 24px,
+    transparent 24px 36px
+  );
+  mask-image: linear-gradient(to bottom, transparent, #000 15%, #000 85%, transparent);
+}
+
 h1,
 h2,
 .font-display {

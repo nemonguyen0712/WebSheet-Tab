@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, Bitter, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
+import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
 import { SITE_NAME, ZALO_URL } from "@/lib/site";
 import "./globals.css";
@@ -39,7 +40,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={`${beVietnam.variable} ${bitter.variable} ${jetbrains.variable}`}>
-      <body className="flex min-h-dvh flex-col font-sans antialiased">
+      <body className="relative isolate flex min-h-dvh flex-col font-sans antialiased">
+        <Ambient />
         <div className="bg-deep text-[12.5px] text-[#c9d6cc]">
           <div className="mx-auto flex h-8 max-w-5xl items-center justify-between gap-3 px-4">
             <span className="truncate">{SITE_NAME} · Sheet & tab guitar</span>
@@ -50,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             )}
           </div>
         </div>
-        <header className="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/75 shadow-[0_1px_0_rgb(255_255_255/0.5)] backdrop-blur-md">
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
             <Link href="/" className="flex min-w-0 items-center gap-2.5">
               <LogoMark className="size-9 shrink-0" />
