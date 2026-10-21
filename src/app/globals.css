@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* The site is light-only: dark: styles apply only under a .dark class, which is never set. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -16,33 +19,18 @@
 }
 
 :root {
-  --bg: #f7f4ef;
+  /* Always light: bright, high-contrast and easy to read on any phone. */
+  --bg: #f5f6f8;
   --surface: #ffffff;
-  --surface-2: #efe9e0;
-  --fg: #1f1a14;
-  --muted: #6f655a;
-  --border: #e3dbcf;
-  --accent: #b4541a;
+  --surface-2: #eef0f3;
+  --fg: #111827;
+  --muted: #5b6472;
+  --border: #e3e6eb;
+  --accent: #ea580c;
   --accent-fg: #ffffff;
-  --accent-soft: #f6e3d4;
-  --chord: #b4541a;
+  --accent-soft: #fff1e7;
+  --chord: #c2410c;
   color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15120f;
-    --surface: #1e1a16;
-    --surface-2: #2a241e;
-    --fg: #efe8de;
-    --muted: #a3988a;
-    --border: #3a3129;
-    --accent: #f08a4b;
-    --accent-fg: #1a0f08;
-    --accent-soft: #3b2618;
-    --chord: #f5a066;
-    color-scheme: dark;
-  }
 }
 
 html {
@@ -87,6 +75,14 @@ svg {
     padding: 2rem;
     color: #000;
   }
+}
+
+/* Horizontal scrollers (filter chips) without a visible scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* We draw our own clear button. */

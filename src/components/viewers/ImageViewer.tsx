@@ -5,7 +5,8 @@ import { useRetryExpiredLink } from "./useRetryExpiredLink";
 import { ViewerError } from "./ViewerError";
 import { Watermark } from "./Watermark";
 
-export function ImageViewer({ url, alt, watermark }: { url: string; alt: string; watermark: string }) {
+/** `watermark`: on-screen overlay; leave out when the name is already stamped into the image. */
+export function ImageViewer({ url, alt, watermark }: { url: string; alt: string; watermark?: string }) {
   const [failed, setFailed] = useState(false);
   const retryExpiredLink = useRetryExpiredLink(url);
   const [actualSize, setActualSize] = useState(false);
@@ -15,7 +16,7 @@ export function ImageViewer({ url, alt, watermark }: { url: string; alt: string;
   return (
     <div>
       <div className="relative overflow-x-auto rounded-xl border border-border bg-white">
-        <Watermark text={watermark} />
+        {watermark && <Watermark text={watermark} />}
         {/* eslint-disable-next-line @next/next/no-img-element -- private Drive file served by our API */}
         <img
           src={url}

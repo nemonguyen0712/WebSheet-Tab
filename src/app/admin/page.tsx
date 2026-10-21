@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { MIN_PASSWORD, formatPhone } from "@/lib/account";
 import { formatDate, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
+import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Quản trị" };
@@ -61,7 +62,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     usersQuery = usersQuery.or(digits.length >= 3 ? `username.ilike.%${term}%,phone.like.%${digits}%` : `username.ilike.%${term}%`);
   }
 
-  const [{ data: users }, { count: activeCount }, { data: monthOrders }, { data: orders }] = await Promise.all([
+  const [{ data: users }, { count: activeCount }, { data: monthOrders }, { data: orders }, { data: viewStats }] = await Promise.all([
     usersQuery,
     admin.from("profiles").select("id", { count: "exact", head: true }).gt("paid_until", now.toISOString()),
     admin.from("orders").select("amount").eq("status", "paid").gte("paid_at", monthStart),
@@ -70,6 +71,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       .select("order_code, plan, amount, status, created_at, profiles(username, phone)")
       .order("created_at", { ascending: false })
       .limit(30),
+    admin.rpc("file_view_stats", { p_since: new Date(now.getTime() - 86_400_000).toISOString() }),
   ]);
   const revenue = (monthOrders ?? []).reduce((sum, o) => sum + o.amount, 0);
 
@@ -85,6 +87,45 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <Stat label="Doanh thu tháng này" value={formatVnd(revenue)} />
         <Stat label="Đơn đã thanh toán tháng này" value={String(monthOrders?.length ?? 0)} />
       </div>
+
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">Xem nhiều nhất 24 giờ qua</h2>
+        <p className="mt-1 text-sm text-muted">
+          Mỗi tài khoản mở tối đa {FILE_VIEW_LIMIT_PER_HOUR} file khác nhau mỗi giờ. Ai mở số file bất thường (gần như cả kho) có thể
+          đang tải hàng loạt: bấm “Hết hạn” để chặn.
+        </p>
+        {viewStats && viewStats.length > 0 ? (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead className="text-left text-muted">
+                <tr>
+                  <th className="py-2 font-normal">Tài khoản</th>
+                  <th className="py-2 text-right font-normal">File khác nhau</th>
+                  <th className="py-2 text-right font-normal">Lượt mở</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {(viewStats as { user_id: string; username: string; phone: string; views: number; files: number }[]).map((v) => (
+                  <tr key={v.user_id}>
+                    <td className="py-2">
+                      <a href={`/admin?q=${encodeURIComponent(v.username)}`} className="font-medium hover:text-accent">
+                        {v.username}
+                      </a>{" "}
+                      <span className="font-mono text-xs text-muted">{formatPhone(v.phone)}</span>
+                    </td>
+                    <td className={`py-2 text-right tabular-nums ${v.files >= FILE_VIEW_LIMIT_PER_HOUR ? "font-semibold text-red-600" : ""}`}>
+                      {v.files}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-muted">{v.views}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted">Chưa có lượt xem nào.</p>
+        )}
+      </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

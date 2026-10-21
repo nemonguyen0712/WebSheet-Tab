@@ -14,7 +14,8 @@ interface PageSize {
   height: number;
 }
 
-export function PdfViewer({ url, watermark }: { url: string; watermark: string }) {
+/** `watermark`: on-screen overlay; leave out when the name is already stamped into the file. */
+export function PdfViewer({ url, watermark }: { url: string; watermark?: string }) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<PageSize[]>([]);
   const [failed, setFailed] = useState(false);
@@ -95,7 +96,7 @@ export function PdfViewer({ url, watermark }: { url: string; watermark: string }
       </Toolbar>
 
       <div ref={containerRef} className="relative overflow-x-auto">
-        <Watermark text={watermark} />
+        {watermark && <Watermark text={watermark} />}
         {!doc && <div className="py-20 text-center text-muted">Đang tải PDF…</div>}
         {doc && width > 0 && (
           <div className="mx-auto flex w-max flex-col gap-3" style={{ minWidth: "100%" }}>

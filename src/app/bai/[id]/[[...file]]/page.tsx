@@ -100,11 +100,12 @@ async function FullView({ tab, viewer }: { tab: TabFile; viewer: Viewer }) {
   const mark = `${viewer.username} · ${formatPhone(viewer.phone)}`;
   switch (tab.kind) {
     case "pdf":
-      return <PdfViewer url={url} watermark={mark} />;
+      // PDFs and images come with the name stamped in (see /api/file); no overlay needed.
+      return <PdfViewer url={url} />;
     case "image":
-      return <ImageViewer url={url} alt={tab.name} watermark={mark} />;
+      return <ImageViewer url={url} alt={tab.name} />;
     case "notation":
-      return <NotationViewer url={url} ext={tab.ext} watermark={mark} />;
+      return <NotationViewer url={url} ext="gp" watermark={mark} />;
     case "text":
       try {
         return <TextViewer text={await getTabText(tab)} watermark={mark} />;

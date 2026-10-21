@@ -9,18 +9,21 @@ export default async function Home() {
   const cheapest = Math.min(...PLANS.map((p) => p.price));
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-16">
+    <main className="mx-auto max-w-5xl px-4 pb-10">
       {!viewer?.active && (
-        <section className="mt-5 rounded-2xl border border-border bg-surface p-5 sm:flex sm:items-center sm:gap-6">
+        <section className="mt-4 overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-amber-50 p-5 sm:flex sm:items-center sm:gap-6 sm:p-6">
           <div className="flex-1">
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Kho sheet & tab guitar, cập nhật liên tục</h1>
-            <p className="mt-1 text-muted">
-              Xem toàn bộ {songs.length > 0 ? `${songs.length} bài` : "kho tab"} và mọi bài mới — chỉ từ {formatVnd(cheapest)}/tháng.
+            <p className="text-xs font-bold uppercase tracking-wider text-accent">Sheet · Tab guitar</p>
+            <h1 className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-balance sm:text-2xl">
+              Kho sheet & tab guitar, cập nhật liên tục
+            </h1>
+            <p className="mt-1.5 text-[15px] text-muted">
+              Xem toàn bộ {songs.length > 0 ? `${songs.length} bài` : "kho tab"} và mọi bài mới, chỉ {formatVnd(cheapest)}/tháng.
             </p>
           </div>
           <Link
             href={viewer ? "/dang-ky" : "/dang-nhap?next=/dang-ky"}
-            className="mt-4 inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-accent px-5 font-medium text-accent-fg hover:opacity-90 sm:mt-0"
+            className="mt-4 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-xl bg-accent px-6 font-semibold text-accent-fg shadow-sm hover:opacity-90 sm:mt-0 sm:w-auto"
           >
             Đăng ký ngay
           </Link>

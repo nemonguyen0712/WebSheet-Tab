@@ -133,10 +133,10 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 -mx-4 border-b border-border bg-bg/95 px-4 pb-3 pt-4 backdrop-blur">
+      <div className="sticky top-14 z-20 -mx-4 space-y-2.5 border-b border-border bg-bg/95 px-4 pb-3 pt-3 backdrop-blur">
         <label className="relative block">
           <span className="sr-only">Tìm bài</span>
-          <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.5-3.5" strokeLinecap="round" />
           </svg>
@@ -145,8 +145,8 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm bài, ca sĩ… (gõ không dấu được)"
-            className="h-12 w-full rounded-xl border border-border bg-surface pl-10 pr-10 text-base outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/30"
+            placeholder="Tìm bài, ca sĩ… (không dấu cũng được)"
+            className="h-12 w-full rounded-xl border border-border bg-surface pl-11 pr-10 text-base shadow-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/25"
             autoComplete="off"
           />
           {query && (
@@ -167,7 +167,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
         </label>
 
         {categories.length > 0 && (
-          <div className="mt-3 flex gap-1 overflow-x-auto rounded-xl bg-surface-2 p-1" role="tablist" aria-label="Phân loại">
+          <div className="no-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-surface p-1" role="tablist" aria-label="Phân loại">
             {[["", songs.length] as const, ...categories].map(([name, count]) => (
               <button
                 key={name || "all"}
@@ -175,20 +175,19 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
                 role="tab"
                 aria-selected={category === name}
                 onClick={() => setCategory(name)}
-                className={`h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium transition-colors ${
-                  category === name ? "bg-accent text-accent-fg shadow-sm" : "text-muted hover:text-fg"
+                className={`h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-semibold transition-colors ${
+                  category === name ? "bg-accent text-accent-fg shadow-sm" : "text-muted hover:bg-surface-2 hover:text-fg"
                 }`}
               >
-                {name || "Tất cả"} <span className="opacity-70">{count}</span>
+                {name || "Tất cả"} <span className="font-normal opacity-75">{count}</span>
               </button>
             ))}
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
           <Chip active={kind === "all"} onClick={() => setKind("all")}>
             {categories.length > 0 ? "Mọi loại file" : "Tất cả"}
-            {categories.length === 0 && <span className="opacity-60"> {songs.length}</span>}
           </Chip>
           {KIND_ORDER.filter((k) => kindCounts.has(k)).map((k) => (
             <Chip key={k} active={kind === k} onClick={() => setKind(kind === k ? "all" : k)}>
@@ -196,25 +195,25 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
             </Chip>
           ))}
         </div>
+      </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as Sort)}
-            className="h-9 rounded-lg border border-border bg-surface px-2"
-            aria-label="Sắp xếp"
-          >
-            <option value="az">Tên A → Z</option>
-            <option value="recent">Mới cập nhật</option>
-          </select>
-          <span className="ml-auto text-muted">
-            {filtered ? `${results.length} / ${songs.length} bài` : `${songs.length} bài`}
-          </span>
-        </div>
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <span className="text-muted">
+          {filtered ? `${results.length} / ${songs.length} bài` : `${songs.length} bài`}
+        </span>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          className="h-9 rounded-lg border border-border bg-surface px-2"
+          aria-label="Sắp xếp"
+        >
+          <option value="az">Tên A → Z</option>
+          <option value="recent">Mới cập nhật</option>
+        </select>
       </div>
 
       {results.length === 0 ? (
-        <div className="py-16 text-center text-muted">
+        <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface py-14 text-center text-muted">
           {songs.length === 0 ? "Chưa có bài nào." : "Không tìm thấy bài nào khớp."}
           {filtered && songs.length > 0 && (
             <div className="mt-3">
@@ -225,7 +224,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
                   setKind("all");
                   setCategory("");
                 }}
-                className="text-accent underline underline-offset-4"
+                className="font-medium text-accent underline underline-offset-4"
               >
                 Xóa bộ lọc
               </button>
@@ -233,32 +232,26 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
           )}
         </div>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {results.map(({ i, matchedFile }) => {
             const sub = songSubtitle(i.song);
             return (
               <li key={i.song.id}>
                 <Link
                   href={songHref(i.song, matchedFile?.file)}
-                  className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-3 hover:bg-surface"
+                  className="flex h-full flex-col gap-2 rounded-xl border border-border bg-surface p-3.5 shadow-sm transition hover:border-accent hover:shadow-md active:scale-[0.99]"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">{i.song.title}</span>
-                      {i.modified > newCutoff && (
-                        <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-semibold text-accent">
-                          Mới
-                        </span>
-                      )}
-                    </div>
-                    {sub && <div className="truncate text-sm text-muted">{sub}</div>}
-                    {matchedFile && (
-                      <div className="truncate text-sm text-accent">
-                        ↳ {matchedFile.label}
-                      </div>
+                  <div className="flex items-start gap-2">
+                    <span className="line-clamp-2 flex-1 font-semibold leading-snug">{i.song.title}</span>
+                    {i.modified > newCutoff && (
+                      <span className="mt-0.5 shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent">
+                        Mới
+                      </span>
                     )}
                   </div>
-                  <div className="flex max-w-[45%] flex-wrap justify-end gap-1">
+                  {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
+                  {matchedFile && <div className="-mt-1 truncate text-sm text-accent">↳ {matchedFile.label}</div>}
+                  <div className="mt-auto flex flex-wrap gap-1">
                     {KIND_ORDER.filter((k) => i.kinds.has(k)).map((k) => (
                       <KindBadge key={k} kind={k} count={i.kinds.get(k)} />
                     ))}
@@ -279,7 +272,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`h-8 rounded-full border px-3 text-sm transition-colors ${
+      className={`h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-colors ${
         active ? "border-accent bg-accent text-accent-fg" : "border-border bg-surface hover:border-accent"
       }`}
     >

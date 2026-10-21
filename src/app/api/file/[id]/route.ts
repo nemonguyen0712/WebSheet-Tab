@@ -1,17 +1,30 @@
+import { formatPhone } from "@/lib/account";
 import { isSameSiteSubresource, verifyFileToken } from "@/lib/file-token";
 import { getTab, getTabBytes } from "@/lib/source";
+import { type Stamp, stampImage, stampNotation, stampPdf } from "@/lib/stamp";
+import type { TabFile } from "@/lib/types";
+import { recordFileView } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
 
-const CONTENT_TYPES: Record<string, string> = {
-  pdf: "application/pdf",
-  image: "application/octet-stream",
-  notation: "application/octet-stream",
-  text: "text/plain; charset=utf-8",
-};
+/** The file as sent to the viewer: with their name stamped inside it. */
+async function stampedFile(tab: TabFile, stamp: Stamp): Promise<{ data: Uint8Array; type: string }> {
+  const bytes = await getTabBytes(tab);
+  switch (tab.kind) {
+    case "pdf":
+      return { data: await stampPdf(bytes, stamp), type: "application/pdf" };
+    case "image":
+      return stampImage(bytes, stamp);
+    case "notation":
+      return { data: await stampNotation(bytes, stamp), type: "application/octet-stream" };
+    default:
+      return { data: bytes, type: "text/plain; charset=utf-8" };
+  }
+}
 
 /**
  * Full sheet/tab file — subscribers only, through a short-lived link signed for their account and
- * device, and only when loaded by our own page. Read from the private Drive folder by the server.
+ * device, only when loaded by our own page, within an hourly limit, and stamped with their name.
+ * Read from the private Drive folder by the server.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,10 +38,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const tab = await getTab(id);
   if (!tab) return new Response("Không tìm thấy file", { status: 404 });
 
+  if (!(await recordFileView(viewer, tab.id))) {
+    return new Response("Bạn đã mở quá nhiều file trong 1 giờ, vui lòng thử lại sau.", { status: 429 });
+  }
+
   try {
-    const bytes = await getTabBytes(tab);
-    const type = tab.kind === "image" && tab.mimeType.startsWith("image/") ? tab.mimeType : CONTENT_TYPES[tab.kind];
-    return new Response(new Uint8Array(bytes), {
+    const stamp = { text: `${viewer.username} · ${formatPhone(viewer.phone)}`, userId: viewer.id };
+    const { data, type } = await stampedFile(tab, stamp);
+    return new Response(new Uint8Array(data), {
       headers: {
         "content-type": type,
         // Personal content: never store in shared caches.
@@ -39,6 +56,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     });
   } catch (err) {
     console.error("file", tab.name, err);
-    return new Response("Không tải được file từ Google Drive", { status: 502 });
+    return new Response("Không tải được file", { status: 502 });
   }
 }

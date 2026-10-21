@@ -64,6 +64,15 @@ export function NotationViewer({ url, ext, watermark }: { url: string; ext: stri
         if (cancelled || !mainRef.current) return;
 
         atRef.current = at;
+        // Phones: start smaller so two bars fit per line, unless the visitor picked a size before.
+        let savedScale: string | null = null;
+        try {
+          savedScale = localStorage.getItem("notation-scale");
+        } catch {}
+        if (savedScale === null && window.innerWidth < 640) {
+          displayRef.current.scaleIdx = SCALES.indexOf(0.75);
+          setScaleIdx(displayRef.current.scaleIdx);
+        }
         api = new at.AlphaTabApi(mainRef.current, {
           core: {
             scriptFile: new URL(SCRIPT, window.location.origin).href,

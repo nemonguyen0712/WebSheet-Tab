@@ -94,5 +94,7 @@ Nếu chưa cấu hình Drive, web dùng tab mẫu trong `content/tabs/`. Nếu 
 - **Gia hạn:** không tự động. Mua thêm thì thời hạn được cộng dồn.
 - **Khi webhook bị trễ:** trang thanh toán tự hỏi lại payOS, nên người dùng vẫn được kích hoạt.
 - **Bảo vệ nội dung:**
+  - File gửi cho người đã trả phí luôn được **in tên đăng nhập + số điện thoại** vào bên trong: chữ mờ trên từng trang PDF và trên ảnh, dòng "Bản cấp cho…" trong tab Guitar Pro. Lưu file về được thì file vẫn mang tên họ.
+  - Link file chỉ dùng được 5 phút, cho đúng tài khoản + thiết bị, và chỉ khi mở từ chính web. Mỗi tài khoản mở tối đa 60 file khác nhau/giờ (`FILE_VIEW_LIMIT_PER_HOUR`). Mọi lượt mở được ghi lại, xem trong `/admin`.
   - Người chưa trả phí không bao giờ nhận được file gốc.
   - Người đã trả phí thì trình duyệt phải tải file về mới hiển thị được, nên không chặn được 100% việc lưu lại hay chụp màn hình. Số điện thoại in mờ trên sheet giúp truy ra người phát tán.

@@ -24,6 +24,7 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 - [ ] Thư mục gốc: **Quyền truy cập chung = Hạn chế**. Chỉ chia sẻ cho service account (Người xem) và những người bạn cho upload (Người chỉnh sửa).
 
 ### Supabase
+- [ ] Chạy file [`supabase/migrations/003_file_views.sql`](supabase/migrations/003_file_views.sql) trong **SQL Editor** (Ctrl+A → Run). File này tạo bảng ghi lượt xem, dùng để giới hạn mỗi tài khoản mở 60 file/giờ và hiện bảng "Xem nhiều nhất" trong `/admin`.
 - [x] **Allow new users to sign up = tắt** (đã kiểm tra).
 - [ ] Không bao giờ gửi **Secret key** (`sb_secret_…`) cho ai. Nếu lỡ lộ: Project Settings → API Keys → tạo key mới, xóa key cũ, cập nhật lại trên Netlify.
 

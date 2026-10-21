@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="mx-auto max-w-md px-4 py-12">
       <div className="rounded-2xl border border-border bg-surface p-6 text-center">
         <h1 className="text-2xl font-bold tracking-tight">{moi ? "Tạo tài khoản" : "Đăng nhập"}</h1>
-        <p className="mt-2 text-muted">Dùng tên đăng nhập hoặc số điện thoại.</p>
+        <p className="mt-2 text-muted">Tài khoản theo số điện thoại, không cần email.</p>
         {viewer && !viewer.deviceOk && (
           <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-sm">
             {MAX_DEVICES === 1
