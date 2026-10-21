@@ -14,7 +14,6 @@ export interface TabFile {
   kind: TabKind;
   size: number | null;
   modifiedTime: string | null;
-  source: "drive" | "local";
 }
 
 /**

@@ -1,5 +1,3 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 import { driveAccessToken, serviceAccount } from "./google";
@@ -12,16 +10,14 @@ export const REVALIDATE_SECONDS = 300;
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 const MAX_DEPTH = 6;
-const LOCAL_DIR = path.join(process.cwd(), "content", "tabs");
 
-/** Drive when a service account and folder are configured; otherwise the sample files in content/tabs. */
-function mode(): { type: "drive"; folder: string } | { type: "local" } {
+/** The root Drive folder; throws a readable error when the site isn't configured yet. */
+function rootFolder(): string {
   const folder = process.env.DRIVE_FOLDER_ID?.trim();
-  return folder && serviceAccount() ? { type: "drive", folder } : { type: "local" };
-}
-
-export function isDriveMode() {
-  return mode().type === "drive";
+  if (!folder || !serviceAccount()) {
+    throw new Error("Chưa cấu hình Google Drive (DRIVE_FOLDER_ID và GOOGLE_SERVICE_ACCOUNT_JSON).");
+  }
+  return folder;
 }
 
 interface Entry {
@@ -34,10 +30,10 @@ interface Entry {
 }
 
 /** Walks a folder tree, keeping only sheet/tab files. */
-async function walkTree(rootId: string, list: (folderId: string) => Promise<Entry[]>, source: TabFile["source"]) {
+async function walkTree(rootId: string) {
   const out: TabFile[] = [];
   async function walk(folderId: string, folder: string[], parentId: string | null) {
-    const entries = await list(folderId);
+    const entries = await driveChildren(folderId);
     await Promise.all(
       entries.map(async (e) => {
         if (e.isFolder) {
@@ -58,7 +54,6 @@ async function walkTree(rootId: string, list: (folderId: string) => Promise<Entr
           kind,
           size: e.size,
           modifiedTime: e.modifiedTime,
-          source,
         });
       }),
     );
@@ -117,55 +112,6 @@ async function driveChildren(folderId: string): Promise<Entry[]> {
   return entries;
 }
 
-// ---------- Local folder (content/tabs) — sample data when Drive isn't configured ----------
-
-const LOCAL_MIME: Record<string, string> = {
-  pdf: "application/pdf",
-  png: "image/png",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  webp: "image/webp",
-  gif: "image/gif",
-  avif: "image/avif",
-  bmp: "image/bmp",
-};
-
-const localId = (rel: string) => Buffer.from(rel).toString("base64url");
-
-function localPath(id: string): string {
-  const rel = Buffer.from(id, "base64url").toString("utf8");
-  const full = path.resolve(LOCAL_DIR, rel);
-  if (!full.startsWith(LOCAL_DIR + path.sep)) throw new Error("Invalid path");
-  return full;
-}
-
-async function localChildren(id: string): Promise<Entry[]> {
-  const dir = id === "" ? LOCAL_DIR : localPath(id);
-  const rel = id === "" ? "" : Buffer.from(id, "base64url").toString("utf8") + "/";
-  let dirents;
-  try {
-    dirents = await fs.readdir(dir, { withFileTypes: true });
-  } catch {
-    return [];
-  }
-  return Promise.all(
-    dirents
-      .filter((d) => !d.name.startsWith("."))
-      .map(async (d) => {
-        const stat = await fs.stat(path.join(dir, d.name));
-        const ext = splitExt(d.name)[1];
-        return {
-          id: localId(rel + d.name),
-          name: d.name,
-          mimeType: d.isDirectory() ? FOLDER_MIME : (LOCAL_MIME[ext] ?? "application/octet-stream"),
-          isFolder: d.isDirectory(),
-          size: d.isDirectory() ? null : stat.size,
-          modifiedTime: stat.mtime.toISOString(),
-        };
-      }),
-  );
-}
-
 // ---------- Songs ----------
 
 const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true });
@@ -197,9 +143,7 @@ function groupSongs(files: TabFile[]): Song[] {
 
 export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string | null }> => {
   try {
-    const m = mode();
-    const files =
-      m.type === "drive" ? await walkTree(m.folder, driveChildren, "drive") : await walkTree("", localChildren, "local");
+    const files = await walkTree(rootFolder());
     return { songs: groupSongs(files), error: null };
   } catch (err) {
     unstable_rethrow(err); // let Next.js's own render signals through
@@ -230,7 +174,6 @@ function driveContentUrl(tab: TabFile) {
 
 /** Whole file contents. Sheet/tab files are small, so they're read into memory. */
 export async function getTabBytes(tab: TabFile): Promise<Uint8Array> {
-  if (tab.source === "local") return new Uint8Array(await fs.readFile(localPath(tab.id)));
   const res = await driveFetch(driveContentUrl(tab), { cache: "no-store" });
   if (!res.ok) throw new Error(`Không tải được file từ Google Drive (${res.status})`);
   return new Uint8Array(await res.arrayBuffer());

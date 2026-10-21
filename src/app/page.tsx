@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SongBrowser } from "@/components/SongBrowser";
 import { PLANS, formatVnd } from "@/lib/plans";
-import { isDriveMode, listSongs } from "@/lib/source";
+import { listSongs } from "@/lib/source";
 import { getViewer } from "@/lib/viewer";
 
 export default async function Home() {
@@ -28,13 +28,6 @@ export default async function Home() {
             Đăng ký ngay
           </Link>
         </section>
-      )}
-      {!isDriveMode() && (
-        <p className="mt-4 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted">
-          Đang hiển thị tab mẫu trong <code className="font-mono">content/tabs</code>. Cấu hình{" "}
-          <code className="font-mono">DRIVE_FOLDER_ID</code> và <code className="font-mono">GOOGLE_SERVICE_ACCOUNT_JSON</code> để đọc
-          từ Google Drive.
-        </p>
       )}
       {error && (
         <div className="mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">

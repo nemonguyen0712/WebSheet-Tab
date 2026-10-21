@@ -87,7 +87,7 @@ npm install
 npm run dev
 ```
 
-Nếu chưa cấu hình Drive, web dùng tab mẫu trong `content/tabs/`. Nếu chưa cấu hình Supabase, có thể giả lập người xem bằng biến `DEV_VIEWER=free|paid|admin` trong `.env.local` (chỉ có tác dụng khi chạy `npm run dev`).
+Cần có `.env.local` với cấu hình Drive và Supabase (xem `.env.example`). Khi phát triển, có thể giả lập người xem bằng biến `DEV_VIEWER=free|paid|admin` trong `.env.local` (chỉ có tác dụng khi chạy `npm run dev`).
 
 ## Ghi chú
 

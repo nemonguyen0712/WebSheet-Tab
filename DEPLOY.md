@@ -7,9 +7,9 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 ## A. Bảo mật — làm TRƯỚC khi deploy
 
 ### Tài khoản admin
-- [ ] Đăng nhập web bằng tài khoản `admin` (mật khẩu trong file `.admin-login.txt`).
+- [ ] Đăng nhập web bằng tài khoản `admin`.
 - [ ] Vào **Tài khoản → Đổi mật khẩu**, đặt mật khẩu riêng của bạn (dài, không dùng lại ở chỗ khác).
-- [ ] **Xóa file `.admin-login.txt`**.
+- [x] File mật khẩu tạm `.admin-login.txt` đã được xóa. Quên mật khẩu admin thì nhờ Claude đặt lại (dùng key Supabase trong `.env.local`).
 
 ### Google Cloud (project WebSheetTab)
 - [ ] **Tạo key mới cho service account**, vì key cũ từng bị gửi qua khung chat:
