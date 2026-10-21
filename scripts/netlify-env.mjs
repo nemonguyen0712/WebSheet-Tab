@@ -29,9 +29,10 @@ const out = {
         PAYOS_CHECKSUM_KEY: env.PAYOS_CHECKSUM_KEY,
       }
     : {
-        BANK_NAME: env.BANK_NAME,
-        BANK_ACCOUNT_NUMBER: env.BANK_ACCOUNT_NUMBER,
-        BANK_ACCOUNT_NAME: env.BANK_ACCOUNT_NAME,
+        // The bank account has a built-in default (src/lib/payments/index.ts); pass it on only when overridden.
+        ...(env.BANK_NAME && { BANK_NAME: env.BANK_NAME }),
+        ...(env.BANK_ACCOUNT_NUMBER && { BANK_ACCOUNT_NUMBER: env.BANK_ACCOUNT_NUMBER }),
+        ...(env.BANK_ACCOUNT_NAME && { BANK_ACCOUNT_NAME: env.BANK_ACCOUNT_NAME }),
         ...(provider === "sepay" && { SEPAY_API_KEY: env.SEPAY_API_KEY }),
       }),
   ADMIN_PHONES: env.ADMIN_PHONES,

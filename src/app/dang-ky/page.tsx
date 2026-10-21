@@ -73,7 +73,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
       </form>
 
       <p className="mt-6 text-center text-sm">
-        <Link href="/" className="text-accent underline underline-offset-4">
+        <Link href="/" className="rounded-lg bg-surface/85 px-3 py-1.5 text-accent underline underline-offset-4 backdrop-blur-sm">
           Xem danh sách bài
         </Link>
       </p>

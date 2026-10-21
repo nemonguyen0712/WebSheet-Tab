@@ -88,16 +88,9 @@ Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR
 
 ### Cách 1: chuyển khoản tay (mặc định, 0đ)
 
-Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
+Tiền vào tài khoản **VietinBank 0908928517 — HUYNH NHAT ANH** (đã cài sẵn trong code, muốn đổi tài khoản thì đặt `BANK_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`). Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
 
-1. Thêm vào `.env.local`, rồi chạy lại `npm run netlify-env` và import lên Netlify (hoặc thêm tay trên Netlify). Trigger deploy lại.
-   ```
-   PAYMENT_PROVIDER=manual
-   BANK_NAME=VietinBank
-   BANK_ACCOUNT_NUMBER=102878437569
-   BANK_ACCOUNT_NAME=HUYNH NHAT ANH
-   ```
-   Nhớ điền `NEXT_PUBLIC_ZALO` để trang thanh toán có nút nhắn Zalo.
+1. Trên Netlify: đặt `PAYMENT_PROVIDER=manual` (hoặc xóa biến này đi, mặc định đã là `manual`) và điền `NEXT_PUBLIC_ZALO` để trang thanh toán có nút nhắn Zalo. Trigger deploy lại.
 2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
 3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
    - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.

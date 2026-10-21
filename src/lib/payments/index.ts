@@ -146,12 +146,15 @@ export async function refreshOrder(order: Order): Promise<Order> {
   return order;
 }
 
-/** Your bank account, shown on the payment page in SePay and manual modes. */
+/**
+ * The bank account buyers pay into (manual and SePay modes): VietinBank 0908928517, Huỳnh Nhật Anh.
+ * BANK_NAME / BANK_ACCOUNT_NUMBER / BANK_ACCOUNT_NAME override it.
+ */
 export function bankAccount() {
   return {
-    bank: process.env.BANK_NAME ?? "",
-    number: process.env.BANK_ACCOUNT_NUMBER ?? "",
-    name: process.env.BANK_ACCOUNT_NAME ?? "",
+    bank: process.env.BANK_NAME || "VietinBank",
+    number: process.env.BANK_ACCOUNT_NUMBER || "0908928517",
+    name: process.env.BANK_ACCOUNT_NAME || "HUYNH NHAT ANH",
   };
 }
 

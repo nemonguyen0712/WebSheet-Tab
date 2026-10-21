@@ -1,8 +1,7 @@
 /**
- * Background behind every page: a warm, lightly blurred photo of a luthier's workshop
- * (public/ambient.webp — "a room with many guitars on the wall", Unsplash, free licence:
- * https://unsplash.com/photos/a-room-with-many-guitars-on-the-wall-I6CZ80fyWDk),
- * under a 20% cream wash, with green glows that tie into the dark header strip and footer.
+ * Background behind every page: the Oliu "Tab & Sheet" brand image (public/ambient.webp —
+ * olive branch, guitar and sheet music on dark stone), under a 20% cream wash, with green
+ * glows that tie into the dark header strip and footer.
  * Fixed, behind content, and ignores the pointer.
  */
 export function Ambient() {

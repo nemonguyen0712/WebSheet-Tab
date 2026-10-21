@@ -60,7 +60,7 @@ Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp
 2. Tạo **kênh thanh toán**, lấy `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`.
 3. Sau khi web đã có địa chỉ thật (bước 5), đặt **Webhook URL** của kênh thanh toán là `https://<web của bạn>/api/payments/payos`.
 
-**Ngân hàng payOS không hỗ trợ (ví dụ VietinBank):** đặt `BANK_NAME` (tên ngắn, ví dụ `VietinBank`, `MBBank`), `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`, rồi chọn một trong hai:
+**Ngân hàng payOS không hỗ trợ (ví dụ VietinBank):** tài khoản nhận tiền mặc định là VietinBank 0908928517 (HUYNH NHAT ANH), đổi bằng `BANK_NAME` (tên ngắn, ví dụ `VietinBank`, `MBBank`), `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`. Rồi chọn một trong hai:
 - `PAYMENT_PROVIDER=manual` (mặc định): trang thanh toán hiện VietQR có sẵn số tiền, nội dung là số điện thoại tài khoản của khách. Thấy tiền về thì bạn tìm số điện thoại đó trong `/admin` và bấm **Đã nhận tiền** ở đơn. Không mất phí.
 - `PAYMENT_PROVIDER=sepay`: tự kích hoạt. Trong SePay, tạo webhook trỏ về `https://<web>/api/payments/sepay`, kiểu xác thực **API Key**, và đặt cùng giá trị vào `SEPAY_API_KEY`.
 

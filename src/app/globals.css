@@ -64,8 +64,8 @@ body {
     radial-gradient(80rem 24rem at 50% calc(100% + 8rem), rgb(22 41 29 / 0.22), transparent 70%);
 }
 .ambient-photo {
-  /* Olive-toned photo (see Ambient.tsx), shown nearly as-is: ~20% ambience. */
-  background: url("/ambient.webp?v=8") center / cover no-repeat;
+  /* Oliu brand image (see Ambient.tsx), shown nearly as-is: ~20% ambience. */
+  background: url("/ambient.webp?v=9") center / cover no-repeat;
 }
 .ambient-wash {
   background: rgb(245 241 230 / 0.2);
