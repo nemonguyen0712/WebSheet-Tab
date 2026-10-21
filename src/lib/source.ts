@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 import { driveAccessToken, serviceAccount } from "./google";
 import { GOOGLE_DOC_MIME, KIND_ORDER, detectKind, parseTitle, splitExt } from "./kinds";
@@ -201,6 +202,7 @@ export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string 
       m.type === "drive" ? await walkTree(m.folder, driveChildren, "drive") : await walkTree("", localChildren, "local");
     return { songs: groupSongs(files), error: null };
   } catch (err) {
+    unstable_rethrow(err); // let Next.js's own render signals through
     console.error(err);
     return { songs: [], error: err instanceof Error ? err.message : String(err) };
   }

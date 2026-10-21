@@ -4,8 +4,9 @@ import type * as AT from "@coderline/alphatab";
 import { useEffect, useRef, useState } from "react";
 import { ToolButton, ToolGroup, Toolbar } from "./Toolbar";
 import { usePersistentState } from "./usePersistentState";
+import { useRetryExpiredLink } from "./useRetryExpiredLink";
 import { ViewerError } from "./ViewerError";
-import { Watermark, noSaveProps } from "./Watermark";
+import { Watermark } from "./Watermark";
 
 declare global {
   interface Window {
@@ -41,6 +42,7 @@ export function NotationViewer({ url, ext, watermark }: { url: string; ext: stri
   const atRef = useRef<typeof AT | null>(null);
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const retryExpiredLink = useRetryExpiredLink(url);
   const [rendering, setRendering] = useState(true);
   const [tracks, setTracks] = useState<string[]>([]);
   const [trackIdx, setTrackIdx] = useState(0);
@@ -91,7 +93,7 @@ export function NotationViewer({ url, ext, watermark }: { url: string; ext: stri
         else api.load(data, [0]);
       } catch (err) {
         console.error(err);
-        if (!cancelled) setStatus("error");
+        if (!cancelled && !retryExpiredLink()) setStatus("error");
       }
     })();
     return () => {
@@ -173,7 +175,7 @@ export function NotationViewer({ url, ext, watermark }: { url: string; ext: stri
         )}
       </Toolbar>
 
-      <div className="relative overflow-hidden rounded-xl border border-border" {...noSaveProps}>
+      <div className="relative overflow-hidden rounded-xl border border-border">
         {watermark && <Watermark text={watermark} />}
         {(status === "loading" || rendering) && (
           <div className="pointer-events-none absolute inset-x-0 top-0 z-10 py-3 text-center text-sm text-neutral-500">

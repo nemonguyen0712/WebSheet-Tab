@@ -1,24 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { useRetryExpiredLink } from "./useRetryExpiredLink";
 import { ViewerError } from "./ViewerError";
-import { Watermark, noSaveProps } from "./Watermark";
+import { Watermark } from "./Watermark";
 
 export function ImageViewer({ url, alt, watermark }: { url: string; alt: string; watermark: string }) {
   const [failed, setFailed] = useState(false);
+  const retryExpiredLink = useRetryExpiredLink(url);
   const [actualSize, setActualSize] = useState(false);
 
   if (failed) return <ViewerError>Không hiển thị được ảnh này.</ViewerError>;
 
   return (
     <div>
-      <div className="relative overflow-x-auto rounded-xl border border-border bg-white" {...noSaveProps}>
+      <div className="relative overflow-x-auto rounded-xl border border-border bg-white">
         <Watermark text={watermark} />
         {/* eslint-disable-next-line @next/next/no-img-element -- private Drive file served by our API */}
         <img
           src={url}
           alt={alt}
-          onError={() => setFailed(true)}
+          onError={() => !retryExpiredLink() && setFailed(true)}
           onClick={() => setActualSize(!actualSize)}
           className={actualSize ? "max-w-none cursor-zoom-out" : "mx-auto w-full cursor-zoom-in"}
         />

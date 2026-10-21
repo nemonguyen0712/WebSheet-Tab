@@ -17,8 +17,8 @@ export async function AccountNav() {
         </Link>
       )}
       {viewer ? (
-        <Link href="/tai-khoan" className={`${button} border border-border hover:border-accent`} title={viewer.email}>
-          Tài khoản
+        <Link href="/tai-khoan" className={`${button} border border-border hover:border-accent`} title={viewer.username}>
+          {viewer.username}
         </Link>
       ) : (
         <Link href="/dang-nhap" className={`${button} border border-border hover:border-accent`}>

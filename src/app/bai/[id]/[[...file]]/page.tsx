@@ -10,7 +10,9 @@ import { PdfViewer } from "@/components/viewers/PdfViewer";
 import { TextViewer } from "@/components/viewers/TextViewer";
 import { ViewerError } from "@/components/viewers/ViewerError";
 import { fileLabel, songSubtitle } from "@/lib/kinds";
+import { formatPhone } from "@/lib/account";
 import { songHref } from "@/lib/links";
+import { signedFileUrl } from "@/lib/file-token";
 import { trimmedText } from "@/lib/preview";
 import { getSong, getTabText } from "@/lib/source";
 import type { TabFile } from "@/lib/types";
@@ -94,17 +96,18 @@ export default async function SongPage({ params }: Props) {
 }
 
 async function FullView({ tab, viewer }: { tab: TabFile; viewer: Viewer }) {
-  const url = `/api/file/${encodeURIComponent(tab.id)}`;
+  const url = signedFileUrl(tab.id, viewer);
+  const mark = `${viewer.username} · ${formatPhone(viewer.phone)}`;
   switch (tab.kind) {
     case "pdf":
-      return <PdfViewer url={url} watermark={viewer.email} />;
+      return <PdfViewer url={url} watermark={mark} />;
     case "image":
-      return <ImageViewer url={url} alt={tab.name} watermark={viewer.email} />;
+      return <ImageViewer url={url} alt={tab.name} watermark={mark} />;
     case "notation":
-      return <NotationViewer url={url} ext={tab.ext} watermark={viewer.email} />;
+      return <NotationViewer url={url} ext={tab.ext} watermark={mark} />;
     case "text":
       try {
-        return <TextViewer text={await getTabText(tab)} watermark={viewer.email} />;
+        return <TextViewer text={await getTabText(tab)} watermark={mark} />;
       } catch {
         return <ViewerError>Không tải được file này.</ViewerError>;
       }

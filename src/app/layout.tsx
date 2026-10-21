@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { AccountNav } from "@/components/AccountNav";
-import { SITE_NAME } from "@/lib/site";
+import { ContentGuard } from "@/components/ContentGuard";
+import { SITE_NAME, ZALO_URL } from "@/lib/site";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
@@ -47,6 +48,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </header>
         {children}
+        <footer className="border-t border-border py-6 text-center text-sm text-muted">
+          {SITE_NAME}
+          {ZALO_URL && (
+            <>
+              {" · Hỗ trợ: "}
+              <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
+                Nhắn Zalo
+              </a>
+            </>
+          )}
+        </footer>
+        <ContentGuard />
       </body>
     </html>
   );

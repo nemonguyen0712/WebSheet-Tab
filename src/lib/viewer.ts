@@ -1,27 +1,31 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { normalizePhone } from "./account";
 import { createAdminClient, createClient, supabaseConfigured } from "./supabase/server";
 
 export const DEVICE_COOKIE = "tab_device";
 /** How many devices one account may be signed in on at once. */
-export const MAX_DEVICES = Number(process.env.MAX_DEVICES) || 2;
+export const MAX_DEVICES = Number(process.env.MAX_DEVICES) || 1;
 
 export interface Viewer {
   id: string;
-  email: string;
+  username: string;
+  /** Normalized phone number, e.g. "84901234567". */
+  phone: string;
   paidUntil: string | null;
   /** Signed in on this device (not pushed out by logging in on too many others). */
   deviceOk: boolean;
+  deviceId: string | null;
   /** Can see full sheets/tabs. */
   active: boolean;
   isAdmin: boolean;
 }
 
-function isAdminEmail(email: string) {
-  return (process.env.ADMIN_EMAILS ?? "")
+function isAdminPhone(phone: string) {
+  return (process.env.ADMIN_PHONES ?? "")
     .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .includes(email.toLowerCase());
+    .map((p) => normalizePhone(p))
+    .includes(phone);
 }
 
 /**
@@ -35,9 +39,11 @@ function devViewer(): Viewer | null | undefined {
   const paid = mode === "paid" || mode === "admin";
   return {
     id: "00000000-0000-0000-0000-000000000000",
-    email: "dev@example.com",
+    username: "dev",
+    phone: "84900000000",
     paidUntil: paid ? new Date(Date.now() + 30 * 86_400_000).toISOString() : null,
     deviceOk: true,
+    deviceId: "dev",
     active: paid,
     isAdmin: mode === "admin",
   };
@@ -55,12 +61,12 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user?.email) return null;
+  if (!user) return null;
 
   const admin = createAdminClient();
   const deviceId = cookieStore.get(DEVICE_COOKIE)?.value;
   const [{ data: profile }, { data: device }] = await Promise.all([
-    admin.from("profiles").select("paid_until").eq("id", user.id).maybeSingle(),
+    admin.from("profiles").select("username, phone, paid_until").eq("id", user.id).maybeSingle(),
     deviceId
       ? admin.from("devices").select("id, last_seen").eq("id", deviceId).eq("user_id", user.id).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -71,15 +77,20 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     await admin.from("devices").update({ last_seen: new Date().toISOString() }).eq("id", device.id);
   }
 
-  const paidUntil: string | null = profile?.paid_until ?? null;
+  if (!profile) return null;
+  const paidUntil: string | null = profile.paid_until;
   const deviceOk = Boolean(device);
+  const isAdmin = isAdminPhone(profile.phone);
   return {
     id: user.id,
-    email: user.email,
+    username: profile.username,
+    phone: profile.phone,
     paidUntil,
     deviceOk,
-    active: deviceOk && paidUntil !== null && Date.parse(paidUntil) > Date.now(),
-    isAdmin: isAdminEmail(user.email),
+    deviceId: device?.id ?? null,
+    // Admins see everything without buying a plan.
+    active: deviceOk && (isAdmin || (paidUntil !== null && Date.parse(paidUntil) > Date.now())),
+    isAdmin,
   };
 });
 
@@ -87,9 +98,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
  * Registers this browser as one of the account's devices, signing out the oldest ones
  * beyond MAX_DEVICES. Returns the device id to store in the DEVICE_COOKIE.
  */
-export async function registerDevice(userId: string, email: string, userAgent: string): Promise<string> {
+export async function registerDevice(userId: string, userAgent: string): Promise<string> {
   const admin = createAdminClient();
-  await admin.from("profiles").upsert({ id: userId, email }, { onConflict: "id", ignoreDuplicates: true });
   const { data: device, error } = await admin
     .from("devices")
     .insert({ user_id: userId, user_agent: userAgent.slice(0, 300) })

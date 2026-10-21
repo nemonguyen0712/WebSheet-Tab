@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "postinstall": "node scripts/copy-assets.mjs"
+    "postinstall": "node scripts/copy-assets.mjs",
+    "netlify-env": "node scripts/netlify-env.mjs"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

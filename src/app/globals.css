@@ -54,6 +54,41 @@ body {
   color: var(--fg);
 }
 
+/* No selecting, long-press menus or dragging sheets out; form fields and .allow-select stay normal. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+select,
+[contenteditable],
+.allow-select,
+.allow-select * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+img,
+canvas,
+svg {
+  -webkit-user-drag: none;
+}
+
+/* Printing gives a blank page. */
+@media print {
+  body * {
+    display: none !important;
+  }
+  body::after {
+    content: "Nội dung này không hỗ trợ in.";
+    display: block;
+    padding: 2rem;
+    color: #000;
+  }
+}
+
 /* We draw our own clear button. */
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;

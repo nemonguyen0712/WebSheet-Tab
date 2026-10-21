@@ -3,15 +3,10 @@ export interface Plan {
   label: string;
   days: number;
   price: number;
-  note?: string;
 }
 
-/** Subscription plans. Edit prices here. */
-export const PLANS: Plan[] = [
-  { id: "1m", label: "1 tháng", days: 30, price: 20_000 },
-  { id: "3m", label: "3 tháng", days: 90, price: 49_000, note: "~16k/tháng" },
-  { id: "12m", label: "12 tháng", days: 365, price: 159_000, note: "~13k/tháng" },
-];
+/** Subscription plans. Edit the price here. */
+export const PLANS: Plan[] = [{ id: "1m", label: "1 tháng", days: 30, price: 20_000 }];
 
 export function getPlan(id: string) {
   return PLANS.find((p) => p.id === id) ?? null;

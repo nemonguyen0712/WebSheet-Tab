@@ -1,10 +1,11 @@
 -- Kho Tab Guitar: run once in Supabase → SQL Editor → New query → Run.
 -- All writes go through the server with the service-role key; browsers get no direct access.
 
--- One row per user (created on first sign-in).
+-- One row per account (created at sign-up). Sign-in is by username or phone + password.
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
-  email text not null,
+  phone text not null unique, -- 84901234567
+  username text not null unique check (username ~ '^[a-z0-9._]{3,20}$'),
   paid_until timestamptz,
   created_at timestamptz not null default now()
 );

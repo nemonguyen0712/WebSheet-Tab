@@ -39,7 +39,7 @@ export interface Order {
 }
 
 /** Creates an order and returns where to send the buyer to pay. */
-export async function startCheckout(user: { id: string; email: string }, plan: Plan): Promise<string> {
+export async function startCheckout(user: { id: string; phone: string }, plan: Plan): Promise<string> {
   const provider = paymentProvider();
   const admin = createAdminClient();
   const { data: order, error } = await admin
@@ -58,7 +58,7 @@ export async function startCheckout(user: { id: string; email: string }, plan: P
       description: transferNote(orderCode),
       returnUrl: resultUrl,
       cancelUrl: `${resultUrl}?huy=1`,
-      buyerEmail: user.email,
+      buyerPhone: "0" + user.phone.slice(2),
     });
     await admin.from("orders").update({ checkout_url: checkoutUrl }).eq("order_code", orderCode);
     return checkoutUrl;

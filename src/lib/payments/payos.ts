@@ -55,7 +55,7 @@ export async function payosCreateLink(order: {
   description: string;
   returnUrl: string;
   cancelUrl: string;
-  buyerEmail?: string;
+  buyerPhone?: string;
 }): Promise<{ checkoutUrl: string }> {
   const { checksumKey } = config();
   const { amount, cancelUrl, description, orderCode, returnUrl } = order;

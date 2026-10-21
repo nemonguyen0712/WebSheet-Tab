@@ -3,8 +3,9 @@
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { useEffect, useRef, useState } from "react";
 import { ToolButton, ToolGroup, Toolbar } from "./Toolbar";
+import { useRetryExpiredLink } from "./useRetryExpiredLink";
 import { ViewerError } from "./ViewerError";
-import { Watermark, noSaveProps } from "./Watermark";
+import { Watermark } from "./Watermark";
 
 const ZOOMS = [0.5, 0.67, 0.8, 1, 1.25, 1.5, 2, 3];
 
@@ -17,6 +18,7 @@ export function PdfViewer({ url, watermark }: { url: string; watermark: string }
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<PageSize[]>([]);
   const [failed, setFailed] = useState(false);
+  const retryExpiredLink = useRetryExpiredLink(url);
   const [zoomIdx, setZoomIdx] = useState(ZOOMS.indexOf(1));
   const [width, setWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,7 @@ export function PdfViewer({ url, watermark }: { url: string; watermark: string }
         setDoc(loaded);
       } catch (err) {
         console.error(err);
-        if (!cancelled) setFailed(true);
+        if (!cancelled && !retryExpiredLink()) setFailed(true);
       }
     })();
     return () => {
@@ -92,7 +94,7 @@ export function PdfViewer({ url, watermark }: { url: string; watermark: string }
         {doc && <span className="text-muted">{doc.numPages} trang</span>}
       </Toolbar>
 
-      <div ref={containerRef} className="relative overflow-x-auto" {...noSaveProps}>
+      <div ref={containerRef} className="relative overflow-x-auto">
         <Watermark text={watermark} />
         {!doc && <div className="py-20 text-center text-muted">Đang tải PDF…</div>}
         {doc && width > 0 && (

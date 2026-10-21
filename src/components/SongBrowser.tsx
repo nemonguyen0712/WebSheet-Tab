@@ -15,7 +15,6 @@ interface Indexed {
   title: string;
   hay: string;
   files: { file: TabFile; label: string; hay: string }[];
-  categoryKey: string;
   modified: number;
   kinds: Map<TabKind, number>;
 }
@@ -77,7 +76,6 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
             const label = fileLabel(file, song.title);
             return { file, label, hay: fold(file.name) };
           }),
-          categoryKey: song.category.join(" / "),
           modified: song.modifiedTime ? Date.parse(song.modifiedTime) : 0,
           kinds,
         };
@@ -85,10 +83,15 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
     [songs],
   );
 
-  const categories = useMemo(
-    () => [...new Set(indexed.map((i) => i.categoryKey).filter(Boolean))].sort(collator.compare),
-    [indexed],
-  );
+  /** Top-level folders (e.g. "Solo", "Melody") with how many songs each holds. */
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of indexed) {
+      const top = i.song.category[0];
+      if (top) counts.set(top, (counts.get(top) ?? 0) + 1);
+    }
+    return [...counts].sort(([a], [b]) => collator.compare(a, b));
+  }, [indexed]);
 
   const kindCounts = useMemo(() => {
     const counts = new Map<TabKind, number>();
@@ -102,7 +105,7 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
     const out: { i: Indexed; score: number; matchedFile: Indexed["files"][number] | null }[] = [];
     for (const i of indexed) {
       if (kind !== "all" && !i.kinds.has(kind)) continue;
-      if (category && i.categoryKey !== category && !i.categoryKey.startsWith(category + " / ")) continue;
+      if (category && i.song.category[0] !== category) continue;
       let matchedFile: Indexed["files"][number] | null = null;
       let score = 0;
       if (tokens.length) {
@@ -163,9 +166,29 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
           )}
         </label>
 
+        {categories.length > 0 && (
+          <div className="mt-3 flex gap-1 overflow-x-auto rounded-xl bg-surface-2 p-1" role="tablist" aria-label="Phân loại">
+            {[["", songs.length] as const, ...categories].map(([name, count]) => (
+              <button
+                key={name || "all"}
+                type="button"
+                role="tab"
+                aria-selected={category === name}
+                onClick={() => setCategory(name)}
+                className={`h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium transition-colors ${
+                  category === name ? "bg-accent text-accent-fg shadow-sm" : "text-muted hover:text-fg"
+                }`}
+              >
+                {name || "Tất cả"} <span className="opacity-70">{count}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Chip active={kind === "all"} onClick={() => setKind("all")}>
-            Tất cả <span className="opacity-60">{songs.length}</span>
+            {categories.length > 0 ? "Mọi loại file" : "Tất cả"}
+            {categories.length === 0 && <span className="opacity-60"> {songs.length}</span>}
           </Chip>
           {KIND_ORDER.filter((k) => kindCounts.has(k)).map((k) => (
             <Chip key={k} active={kind === k} onClick={() => setKind(kind === k ? "all" : k)}>
@@ -175,21 +198,6 @@ export function SongBrowser({ songs }: { songs: Song[] }) {
         </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          {categories.length > 0 && (
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="h-9 max-w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-2 sm:max-w-xs sm:flex-none"
-              aria-label="Lọc theo thư mục"
-            >
-              <option value="">Mọi thư mục</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          )}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}

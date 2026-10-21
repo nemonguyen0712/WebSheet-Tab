@@ -6,7 +6,7 @@ import type { Viewer } from "@/lib/viewer";
 export function Paywall({ viewer, returnTo }: { viewer: Viewer | null; returnTo: string }) {
   const cheapest = Math.min(...PLANS.map((p) => p.price));
   let title = "Đăng ký để xem toàn bộ sheet/tab";
-  let action = { href: `/dang-nhap?next=${encodeURIComponent(returnTo)}`, label: "Đăng nhập bằng Google" };
+  let action = { href: `/dang-nhap?next=${encodeURIComponent(returnTo)}`, label: "Đăng nhập / Tạo tài khoản" };
   if (viewer && !viewer.deviceOk) {
     title = "Tài khoản của bạn vừa đăng nhập trên thiết bị khác";
     action = { href: `/dang-nhap?next=${encodeURIComponent(returnTo)}`, label: "Đăng nhập lại trên máy này" };

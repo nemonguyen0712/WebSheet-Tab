@@ -12,3 +12,9 @@ public/alphatab/
 
 # Local editor/agent settings
 .claude/
+
+# Generated admin login (local only)
+.admin-login.txt
+
+# Environment variables to import into Netlify (contains secrets)
+netlify.env

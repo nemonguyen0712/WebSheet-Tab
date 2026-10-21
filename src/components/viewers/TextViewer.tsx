@@ -2,7 +2,7 @@
 
 import { ToolButton, ToolGroup, Toolbar } from "./Toolbar";
 import { usePersistentState } from "./usePersistentState";
-import { Watermark, noSaveProps } from "./Watermark";
+import { Watermark } from "./Watermark";
 
 export function TextViewer({ text, watermark }: { text: string; watermark: string }) {
   const [fontSize, setFontSize] = usePersistentState("text-font-size", 15);
@@ -19,7 +19,7 @@ export function TextViewer({ text, watermark }: { text: string; watermark: strin
           </ToolButton>
         </ToolGroup>
       </Toolbar>
-      <div className="relative overflow-x-auto rounded-xl border border-border bg-surface p-4 sm:p-6" {...noSaveProps}>
+      <div className="relative overflow-x-auto rounded-xl border border-border bg-surface p-4 sm:p-6">
         <Watermark text={watermark} />
         <div className="font-mono leading-relaxed whitespace-pre" style={{ fontSize }}>
           {text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ")}
