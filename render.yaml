@@ -1,0 +1,32 @@
+# Render Blueprint (https://render.com/docs/blueprint-spec): Render → New → Blueprint → pick this repo.
+# Every push to main rebuilds and redeploys; a failed build keeps the previous version live.
+services:
+  - type: web
+    name: oliu
+    runtime: node
+    plan: free # free sleeps after ~15 idle minutes; "starter" stays awake
+    region: singapore
+    branch: main
+    buildCommand: npm ci && npm run typecheck && npm run build
+    # Runs Next directly rather than through npm, saving ~80 MB of the instance's memory.
+    startCommand: node node_modules/next/dist/bin/next start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PAYMENT_PROVIDER
+        value: manual
+      - key: MAX_DEVICES
+        value: "1"
+      # Asked for when the Blueprint is created (sync: false); see DEPLOY.md.
+      - key: DRIVE_FOLDER_ID
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_PHONES
+        sync: false

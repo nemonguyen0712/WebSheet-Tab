@@ -1,5 +1,5 @@
 # Checks every push and pull request: TypeScript errors and a full production build.
-# Netlify deploys main on its own (and keeps the previous version live if a build fails).
+# Render deploys main on its own (and keeps the previous version live if a build fails).
 name: CI
 
 on:

@@ -66,17 +66,14 @@ Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp
 
 ### 4. Đưa web lên mạng
 
-Vercel bản miễn phí **không cho dùng thương mại**. Hai lựa chọn:
-- **Netlify:** bản miễn phí cho phép dùng thương mại.
-- **Vercel Pro:** khoảng 20 USD/tháng.
+Web chạy trên **Render**, cấu hình sẵn trong [`render.yaml`](render.yaml) (gói Free, tự ngủ sau ~15 phút không ai vào; gói Starter ~7 USD/tháng thì luôn thức). Các bước chi tiết ở [`DEPLOY.md`](DEPLOY.md) mục B.
 
-Cách làm:
 1. Đẩy code lên GitHub.
-2. Import repo vào Netlify (hoặc Vercel).
-3. Thêm toàn bộ biến môi trường (xem [`.env.example`](.env.example)), gồm cả:
-   - `NEXT_PUBLIC_SITE_URL`: địa chỉ web
-   - `ADMIN_PHONES`: số điện thoại của bạn
-4. Deploy. Sau đó quay lại bước 3 để đặt webhook payOS bằng địa chỉ web thật.
+2. Render → **New → Blueprint** → chọn repo.
+3. Điền các biến bí mật Render hỏi (chạy `npm run deploy-env` để có sẵn file `deploy.env`), gồm cả `ADMIN_PHONES`: số điện thoại của bạn.
+4. Apply. Nếu dùng payOS/SePay, quay lại bước 3 để đặt webhook bằng địa chỉ web thật.
+
+(Vercel bản miễn phí **không cho dùng thương mại**; Netlify bản miễn phí giới hạn số lần deploy mỗi tháng.)
 
 ---
 

@@ -1,6 +1,5 @@
-// Builds netlify.env from .env.local for Netlify → Site configuration → Environment variables →
-// "Import from a .env file". Netlify functions run on AWS Lambda, which allows only ~4 KB of
-// environment variables in total, so the Google key is trimmed to the two fields we use.
+// Builds deploy.env from .env.local, to paste into Render → the service → Environment →
+// "Add from .env". The Google key is trimmed to the two fields the site uses.
 import { readFileSync, writeFileSync } from "node:fs";
 
 const env = Object.fromEntries(
@@ -50,9 +49,7 @@ for (const [name, value] of Object.entries(out)) {
   }
   lines.push(`${name}='${value}'`);
 }
-writeFileSync("netlify.env", lines.join("\n") + "\n");
+writeFileSync("deploy.env", lines.join("\n") + "\n");
 
-const bytes = Object.entries(out).reduce((n, [k, v]) => n + (v ? k.length + v.length : 0), 0);
-console.log(`netlify.env: ${lines.length} biến, khoảng ${bytes} byte (giới hạn của Netlify ~4096).`);
-if (bytes > 3800) console.log("⚠ Gần chạm giới hạn 4KB của Netlify.");
-if (missing.length) console.log(`Chưa có (điền sau trên Netlify): ${missing.join(", ")}`);
+console.log(`deploy.env: ${lines.length} biến.`);
+if (missing.length) console.log(`Chưa có (điền sau trên Render): ${missing.join(", ")}`);
