@@ -105,13 +105,18 @@ export async function refreshOrder(order: Order): Promise<Order> {
   return order;
 }
 
-/** VietQR image for SePay mode (bank + account from env). */
+/**
+ * VietQR for SePay mode: a "bank card" style image (VietQR, napas 247 and bank logos, account
+ * holder, account number) whose QR already contains the amount and the order's transfer note,
+ * so customers just scan and confirm. Bank + account from env.
+ */
 export function sepayQrUrl(order: Pick<Order, "order_code" | "amount">) {
+  const bank = encodeURIComponent(process.env.SEPAY_BANK ?? "");
+  const account = encodeURIComponent(process.env.SEPAY_ACCOUNT_NUMBER ?? "");
   const params = new URLSearchParams({
-    acc: process.env.SEPAY_ACCOUNT_NUMBER ?? "",
-    bank: process.env.SEPAY_BANK ?? "",
     amount: String(order.amount),
-    des: transferNote(order.order_code),
+    addInfo: transferNote(order.order_code),
+    accountName: process.env.SEPAY_ACCOUNT_NAME ?? "",
   });
-  return `https://qr.sepay.vn/img?${params}`;
+  return `https://img.vietqr.io/image/${bank}-${account}-print.png?${params}`;
 }

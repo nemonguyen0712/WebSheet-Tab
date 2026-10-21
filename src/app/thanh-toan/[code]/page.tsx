@@ -61,8 +61,12 @@ export default async function PaymentPage({
             {order.provider === "sepay" ? (
               <>
                 <p className="mt-4 text-sm text-muted">Quét mã bằng app ngân hàng bất kỳ:</p>
-                {/* eslint-disable-next-line @next/next/no-img-element -- VietQR image from SePay */}
-                <img src={sepayQrUrl(order)} alt="Mã VietQR" className="mx-auto mt-3 w-64 rounded-lg bg-white p-2" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- VietQR card image */}
+                <img
+                  src={sepayQrUrl(order)}
+                  alt={`Mã VietQR chuyển ${formatVnd(order.amount)}, nội dung ${transferNote(order.order_code)}`}
+                  className="mx-auto mt-3 w-full max-w-[300px] rounded-lg border border-border bg-white p-2"
+                />
                 <dl className="mt-4 space-y-1 text-left text-sm">
                   <Row label="Ngân hàng" value={process.env.SEPAY_BANK ?? ""} />
                   <Row label="Số tài khoản" value={process.env.SEPAY_ACCOUNT_NUMBER ?? ""} />
