@@ -65,7 +65,7 @@ body {
 }
 .ambient-photo {
   /* Olive-toned photo (see Ambient.tsx), shown nearly as-is: ~20% ambience. */
-  background: url("/ambient.webp?v=7") center / cover no-repeat;
+  background: url("/ambient.webp?v=8") center / cover no-repeat;
 }
 .ambient-wash {
   background: rgb(245 241 230 / 0.2);

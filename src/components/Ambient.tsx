@@ -1,10 +1,9 @@
 /**
- * Background behind every page: an olive grove landscape, colour-mapped to the site palette
- * (forest green → olive → cream) and only lightly blurred (public/ambient.webp —
- * "a grove of olive trees in a field with mountains in the background", Unsplash, free licence:
- * https://unsplash.com/photos/a-grove-of-olive-trees-in-a-field-with-mountains-in-the-background-M6jXE5-WLKA),
- * under a 20% cream wash, with green glows that tie into the dark
- * header strip and footer. Fixed, behind content, and ignores the pointer.
+ * Background behind every page: a warm, lightly blurred photo of a luthier's workshop
+ * (public/ambient.webp — "a room with many guitars on the wall", Unsplash, free licence:
+ * https://unsplash.com/photos/a-room-with-many-guitars-on-the-wall-I6CZ80fyWDk),
+ * under a 20% cream wash, with green glows that tie into the dark header strip and footer.
+ * Fixed, behind content, and ignores the pointer.
  */
 export function Ambient() {
   return (
