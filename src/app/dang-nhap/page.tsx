@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { supabaseConfigured } from "@/lib/supabase/server";
 import { MAX_DEVICES, getViewer } from "@/lib/viewer";
@@ -17,16 +16,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (viewer?.deviceOk) redirect(safePath(next));
 
   return (
-    <main className="mx-auto max-w-md px-4 py-8">
-      <Image
-        src="/oliu-logo.webp"
-        alt="Oliu"
-        width={725}
-        height={492}
-        priority
-        className="w-full rounded-2xl border border-[#5c4a2a] shadow-xl"
-      />
-      <div className="mt-4 rounded-2xl border border-border bg-surface p-6 text-center">
+    // Starts just below the OLIU wordmark of the background photo (see .below-backdrop-logo).
+    <main className="below-backdrop-logo mx-auto max-w-md px-4 pb-10">
+      <div className="oliu-dark rounded-2xl border border-border bg-surface p-6 text-center shadow-2xl backdrop-blur-md">
         <h1 className="text-2xl font-bold tracking-tight">{moi ? "Tạo tài khoản" : "Đăng nhập"}</h1>
         <p className="mt-2 text-muted">Tài khoản theo số điện thoại, không cần email.</p>
         {viewer && !viewer.deviceOk && (

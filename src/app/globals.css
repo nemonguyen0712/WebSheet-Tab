@@ -60,6 +60,37 @@ body {
   background: url("/ambient.webp?v=9") center / cover no-repeat;
 }
 
+/*
+ * Pushes a page's content below the OLIU wordmark of the fixed background photo (login page).
+ * The photo (1672×941) covers the viewport, so it is max(100vw·941/1672, 100vh) tall and centred;
+ * the wordmark ends at ~62% of its height; start at ~63% (above the "TAB & SHEET" line), minus the 56px header.
+ */
+.below-backdrop-logo {
+  padding-top: calc(50vh + 0.128 * max(56.28vw, 100vh) - 48px);
+}
+
+/* Dark olive & gold panel matching the background photo: re-points the palette for its contents. */
+.oliu-dark {
+  --bg: rgb(10 9 6 / 0.55);
+  --surface: rgb(20 17 11 / 0.92);
+  --surface-2: rgb(0 0 0 / 0.35);
+  --fg: #f1e6cc;
+  --muted: #b9aa8a;
+  --border: rgb(201 164 100 / 0.4);
+  --accent: #c9a464;
+  --accent-fg: #17130c;
+  --accent-soft: rgb(201 164 100 / 0.15);
+  color: var(--fg);
+}
+.oliu-dark input {
+  color: var(--fg);
+}
+.oliu-dark input:-webkit-autofill {
+  -webkit-text-fill-color: var(--fg);
+  box-shadow: 0 0 0 1000px #1b170f inset;
+  caret-color: var(--fg);
+}
+
 h1,
 h2,
 .font-display {

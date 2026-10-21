@@ -102,7 +102,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
       {busy ? "Đang xử lý…" : label}
     </button>
   );
-  const errorLine = error && <p className="text-sm text-red-600">{error}</p>;
+  const errorLine = error && <p className="text-sm text-[#f2a7a0]">{error}</p>;
 
   return (
     <div>
@@ -112,7 +112,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            className={`h-10 rounded-lg ${mode === m ? "bg-surface shadow-sm" : "text-muted"}`}
+            className={`h-10 rounded-lg ${mode === m ? "bg-accent text-accent-fg shadow-sm" : "text-muted"}`}
           >
             {m === "login" ? "Đăng nhập" : "Tạo tài khoản"}
           </button>

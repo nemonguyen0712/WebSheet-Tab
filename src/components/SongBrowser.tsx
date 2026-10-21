@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { categoryRank, categoryTitle } from "@/lib/categories";
+import { categoryRank } from "@/lib/categories";
 import { KIND_LABELS, KIND_ORDER, fileLabel, fold, songSubtitle } from "@/lib/kinds";
 import { songHref } from "@/lib/links";
 import { NEW_DAYS } from "@/lib/site";
@@ -25,18 +25,8 @@ const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true })
 /**
  * Search and filters over a list of songs. `scoped`: every song is already in one section
  * (the /solo or /melody page), so there are no section tabs and cards skip the section name.
- * `idle`: shown instead of the song list until the visitor searches or filters (the home page's
- * Oliu Solo / Oliu Melody cards); the section tabs are hidden since the cards replace them.
  */
-export function SongBrowser({
-  songs,
-  scoped = false,
-  idle,
-}: {
-  songs: Song[];
-  scoped?: boolean;
-  idle?: React.ReactNode;
-}) {
+export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?: boolean }) {
   const [query, setQuery] = useState("");
   const [kind, setKind] = useState<TabKind | "all">("all");
   const [category, setCategory] = useState("");
@@ -182,7 +172,7 @@ export function SongBrowser({
           )}
         </label>
 
-        {categories.length > 0 && !idle && (
+        {categories.length > 0 && (
           <div className="no-scrollbar flex gap-1 overflow-x-auto rounded-xl border border-border bg-surface p-1" role="tablist" aria-label="Phân loại">
             {[["", songs.length] as const, ...categories].map(([name, count]) => (
               <button
@@ -213,69 +203,63 @@ export function SongBrowser({
         </div>
       </div>
 
-      {idle && !filtered ? (
-        idle
-      ) : (
-        <>
-          <div className="mt-3 flex items-center justify-between gap-2 text-sm">
-            <span className="rounded-md bg-surface/90 px-2.5 py-1 text-muted backdrop-blur-sm">
-              {filtered ? `${results.length} / ${songs.length} bài` : `${songs.length} bài`}
-            </span>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as Sort)}
-              className="h-9 rounded-lg border border-border bg-surface px-2"
-              aria-label="Sắp xếp"
-            >
-              <option value="az">Tên A → Z</option>
-              <option value="recent">Mới cập nhật</option>
-            </select>
-          </div>
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <span className="rounded-md bg-surface/90 px-2.5 py-1 text-muted backdrop-blur-sm">
+          {filtered ? `${results.length} / ${songs.length} bài` : `${songs.length} bài`}
+        </span>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as Sort)}
+          className="h-9 rounded-lg border border-border bg-surface px-2"
+          aria-label="Sắp xếp"
+        >
+          <option value="az">Tên A → Z</option>
+          <option value="recent">Mới cập nhật</option>
+        </select>
+      </div>
 
-          {results.length === 0 ? (
-            <div className="mt-3 rounded-lg border border-dashed border-border bg-surface/80 py-14 text-center text-muted">
-              {songs.length === 0 ? "Chưa có bài nào." : "Không tìm thấy bài nào khớp."}
-              {filtered && songs.length > 0 && (
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery("");
-                      setKind("all");
-                      setCategory("");
-                    }}
-                    className="font-medium text-accent underline underline-offset-4"
-                  >
-                    Xóa bộ lọc
-                  </button>
-                </div>
-              )}
+      {results.length === 0 ? (
+        <div className="mt-3 rounded-lg border border-dashed border-border bg-surface/80 py-14 text-center text-muted">
+          {songs.length === 0 ? "Chưa có bài nào." : "Không tìm thấy bài nào khớp."}
+          {filtered && songs.length > 0 && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setKind("all");
+                  setCategory("");
+                }}
+                className="font-medium text-accent underline underline-offset-4"
+              >
+                Xóa bộ lọc
+              </button>
             </div>
-          ) : categories.length > 0 && !category ? (
-            // One column per top-level folder (Solo | Melody), side by side on wider screens.
-            <div className="mt-3 grid items-start gap-6 md:grid-cols-2">
-              {columnsOf(results, categories.map(([name]) => name)).map(([name, items]) => (
-                <section key={name}>
-                  <h2 className="mb-2 flex items-baseline gap-2 rounded-md border-b-2 border-brass/50 bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">
-                    {name === "Khác" ? name : categoryTitle(name)}
-                    <span className="font-sans text-sm font-normal text-muted">{items.length} bài</span>
-                  </h2>
-                  <ul className="grid gap-2">
-                    {items.map((r) => (
-                      <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn />
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          ) : (
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-              {results.map((r) => (
-                <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn={scoped} />
-              ))}
-            </ul>
           )}
-        </>
+        </div>
+      ) : categories.length > 0 && !category ? (
+        // One column per top-level folder (Solo | Melody), side by side on wider screens.
+        <div className="mt-3 grid items-start gap-6 md:grid-cols-2">
+          {columnsOf(results, categories.map(([name]) => name)).map(([name, items]) => (
+            <section key={name}>
+              <h2 className="mb-2 flex items-baseline gap-2 rounded-md border-b-2 border-brass/50 bg-surface/90 px-3 py-2 text-xl font-bold text-deep backdrop-blur-sm">
+                {name}
+                <span className="font-sans text-sm font-normal text-muted">{items.length} bài</span>
+              </h2>
+              <ul className="grid gap-2">
+                {items.map((r) => (
+                  <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn />
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {results.map((r) => (
+            <SongCard key={r.i.song.id} {...r} newCutoff={newCutoff} inColumn={scoped} />
+          ))}
+        </ul>
       )}
     </div>
   );
