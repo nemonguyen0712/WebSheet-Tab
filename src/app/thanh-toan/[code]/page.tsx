@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getOrder, refreshOrder, sepayQrUrl, transferNote } from "@/lib/payments";
+import { bankAccount, bankQrUrl, getOrder, refreshOrder, transferNote } from "@/lib/payments";
 import { formatDate, formatVnd, getPlan } from "@/lib/plans";
+import { ZALO_URL } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
 import { OrderPoller } from "./OrderPoller";
 
@@ -24,6 +25,7 @@ export default async function PaymentPage({
   if (!found || found.user_id !== viewer.id) notFound();
   const order = await refreshOrder(found);
   const plan = getPlan(order.plan);
+  const bank = bankAccount();
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -58,21 +60,7 @@ export default async function PaymentPage({
         {order.status === "pending" && !huy && (
           <>
             <OrderPoller orderCode={order.order_code} />
-            {order.provider === "sepay" ? (
-              <>
-                <p className="mt-4 text-sm text-muted">Quét mã bằng app ngân hàng bất kỳ:</p>
-                {/* eslint-disable-next-line @next/next/no-img-element -- VietQR image from SePay */}
-                <img src={sepayQrUrl(order)} alt="Mã VietQR" className="mx-auto mt-3 w-64 rounded-lg bg-white p-2" />
-                <dl className="mt-4 space-y-1 text-left text-sm">
-                  <Row label="Ngân hàng" value={process.env.SEPAY_BANK ?? ""} />
-                  <Row label="Số tài khoản" value={process.env.SEPAY_ACCOUNT_NUMBER ?? ""} />
-                  {process.env.SEPAY_ACCOUNT_NAME && <Row label="Chủ tài khoản" value={process.env.SEPAY_ACCOUNT_NAME} />}
-                  <Row label="Số tiền" value={formatVnd(order.amount)} />
-                  <Row label="Nội dung" value={transferNote(order.order_code)} highlight />
-                </dl>
-                <p className="mt-3 text-xs text-muted">Ghi đúng nội dung chuyển khoản để được kích hoạt tự động.</p>
-              </>
-            ) : (
+            {order.provider === "payos" ? (
               order.checkout_url && (
                 <a
                   href={order.checkout_url}
@@ -81,10 +69,41 @@ export default async function PaymentPage({
                   Mở trang thanh toán
                 </a>
               )
+            ) : (
+              <>
+                <p className="mt-4 text-sm text-muted">Quét mã bằng app ngân hàng bất kỳ (đã có sẵn số tiền và nội dung):</p>
+                {/* eslint-disable-next-line @next/next/no-img-element -- VietQR image from SePay */}
+                <img src={bankQrUrl(order)} alt="Mã VietQR" className="mx-auto mt-3 w-64 rounded-lg bg-white p-2" />
+                <dl className="mt-4 space-y-1 text-left text-sm">
+                  <Row label="Ngân hàng" value={bank.bank} />
+                  <Row label="Số tài khoản" value={bank.number} />
+                  {bank.name && <Row label="Chủ tài khoản" value={bank.name} />}
+                  <Row label="Số tiền" value={formatVnd(order.amount)} />
+                  <Row label="Nội dung" value={transferNote(order.order_code)} highlight />
+                </dl>
+                {order.provider === "manual" ? (
+                  <p className="mt-3 text-sm text-muted">
+                    Chuyển khoản xong, nhắn mình mã đơn <b>#{order.order_code}</b>
+                    {ZALO_URL ? (
+                      <>
+                        {" "}qua{" "}
+                        <a href={ZALO_URL} target="_blank" rel="noreferrer" className="font-medium text-accent underline">
+                          Zalo
+                        </a>
+                      </>
+                    ) : null}{" "}
+                    để được kích hoạt.
+                  </p>
+                ) : (
+                  <p className="mt-3 text-xs text-muted">Ghi đúng nội dung chuyển khoản để được kích hoạt tự động.</p>
+                )}
+              </>
             )}
             <p className="mt-6 flex items-center justify-center gap-2 text-sm text-muted">
               <span className="size-2 animate-pulse rounded-full bg-accent" />
-              Đang chờ xác nhận thanh toán… trang sẽ tự cập nhật.
+              {order.provider === "manual"
+                ? "Đang chờ xác nhận… trang sẽ tự cập nhật khi đơn được kích hoạt."
+                : "Đang chờ xác nhận thanh toán… trang sẽ tự cập nhật."}
             </p>
           </>
         )}

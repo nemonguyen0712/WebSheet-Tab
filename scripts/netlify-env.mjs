@@ -13,7 +13,7 @@ const env = Object.fromEntries(
 const raw = env.GOOGLE_SERVICE_ACCOUNT_JSON ?? "";
 const key = raw ? JSON.parse(raw.startsWith("{") ? raw : Buffer.from(raw, "base64").toString("utf8")) : null;
 
-const provider = env.PAYMENT_PROVIDER === "sepay" ? "sepay" : "payos";
+const provider = ["sepay", "manual"].includes(env.PAYMENT_PROVIDER) ? env.PAYMENT_PROVIDER : "payos";
 
 const out = {
   DRIVE_FOLDER_ID: env.DRIVE_FOLDER_ID,
@@ -22,17 +22,17 @@ const out = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY,
   PAYMENT_PROVIDER: provider,
-  ...(provider === "sepay"
+  ...(provider === "payos"
     ? {
-        SEPAY_API_KEY: env.SEPAY_API_KEY,
-        SEPAY_BANK: env.SEPAY_BANK,
-        SEPAY_ACCOUNT_NUMBER: env.SEPAY_ACCOUNT_NUMBER,
-        SEPAY_ACCOUNT_NAME: env.SEPAY_ACCOUNT_NAME,
-      }
-    : {
         PAYOS_CLIENT_ID: env.PAYOS_CLIENT_ID,
         PAYOS_API_KEY: env.PAYOS_API_KEY,
         PAYOS_CHECKSUM_KEY: env.PAYOS_CHECKSUM_KEY,
+      }
+    : {
+        BANK_NAME: env.BANK_NAME,
+        BANK_ACCOUNT_NUMBER: env.BANK_ACCOUNT_NUMBER,
+        BANK_ACCOUNT_NAME: env.BANK_ACCOUNT_NAME,
+        ...(provider === "sepay" && { SEPAY_API_KEY: env.SEPAY_API_KEY }),
       }),
   ADMIN_PHONES: env.ADMIN_PHONES,
   NEXT_PUBLIC_ZALO: env.NEXT_PUBLIC_ZALO,

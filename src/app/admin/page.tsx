@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MIN_PASSWORD, formatPhone } from "@/lib/account";
+import { getOrder, markPaid } from "@/lib/payments";
 import { formatDate, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
@@ -24,6 +25,15 @@ async function extend(formData: FormData) {
   const admin = createAdminClient();
   if (days > 0) await admin.rpc("extend_subscription", { p_user: userId, p_days: days });
   else await admin.from("profiles").update({ paid_until: new Date().toISOString() }).eq("id", userId);
+  revalidatePath("/admin");
+}
+
+/** Manual transfers: once the money shows up in the bank app, mark the order paid (extends the plan, counts as revenue). */
+async function confirmOrder(formData: FormData) {
+  "use server";
+  const viewer = await requireAdmin();
+  const order = await getOrder(Number(formData.get("order")));
+  if (order?.status === "pending") await markPaid(order.order_code, order.amount, `manual:${viewer.username}`);
   revalidatePath("/admin");
 }
 
@@ -202,21 +212,38 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Đơn gần đây</h2>
+        <p className="mt-1 text-sm text-muted">
+          Khách chuyển khoản tay: thấy tiền về đúng số tiền + nội dung <span className="font-mono">TAB&lt;mã đơn&gt;</span> trong app
+          ngân hàng thì bấm “Đã nhận tiền”, gói được cộng ngay.
+        </p>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
             <tbody className="divide-y divide-border">
-              {(orders ?? []).map((o) => (
-                <tr key={o.order_code}>
-                  <td className="py-2 font-mono">#{o.order_code}</td>
-                  <td className="py-2">{(o.profiles as unknown as { username: string } | null)?.username}</td>
-                  <td className="py-2">{getPlan(o.plan)?.label ?? o.plan}</td>
-                  <td className="py-2">{formatVnd(o.amount)}</td>
-                  <td className="py-2 text-muted">{formatDate(o.created_at)}</td>
-                  <td className="py-2 text-right">
-                    <StatusBadge status={o.status} />
-                  </td>
-                </tr>
-              ))}
+              {(orders ?? []).map((o) => {
+                const buyer = o.profiles as unknown as { username: string; phone: string } | null;
+                return (
+                  <tr key={o.order_code}>
+                    <td className="py-2 font-mono">#{o.order_code}</td>
+                    <td className="py-2">
+                      {buyer?.username} <span className="font-mono text-xs text-muted">{buyer && formatPhone(buyer.phone)}</span>
+                    </td>
+                    <td className="py-2">{getPlan(o.plan)?.label ?? o.plan}</td>
+                    <td className="py-2">{formatVnd(o.amount)}</td>
+                    <td className="py-2 text-muted">{formatDate(o.created_at)}</td>
+                    <td className="py-2 text-right">
+                      {o.status === "pending" ? (
+                        <form action={confirmOrder} className="inline-flex items-center gap-2">
+                          <input type="hidden" name="order" value={o.order_code} />
+                          <StatusBadge status={o.status} />
+                          <button className="h-8 rounded-md border border-border px-2 text-xs hover:border-accent">Đã nhận tiền</button>
+                        </form>
+                      ) : (
+                        <StatusBadge status={o.status} />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -5,7 +5,7 @@ Web bán quyền xem sheet/tab guitar theo tháng. Sheet/tab lấy từ một th
 - **Người chưa trả phí:** thấy danh sách bài, vào bài thì thấy 1/3 đầu của sheet, phần còn lại bị làm mờ ngay trên server.
 - **Người đã trả phí:** xem toàn bộ PDF, ảnh và tab Guitar Pro (chỉ xem, không phát tiếng). Sheet có in mờ số điện thoại người xem, không có nút tải về, mỗi tài khoản chỉ dùng 1 thiết bị (đăng nhập máy khác thì máy cũ bị đăng xuất).
 - **Tài khoản:** tạo 2 bước (nhập số điện thoại, rồi chọn tên đăng nhập + mật khẩu), không gửi SMS. Đăng nhập bằng tên đăng nhập hoặc số điện thoại. Khách quên mật khẩu thì liên hệ bạn, bạn đặt lại trong `/admin`.
-- **Thanh toán:** 1 gói 20.000đ / 30 ngày, quét VietQR qua payOS (hoặc SePay), tự kích hoạt khi tiền về. Sửa giá trong `src/lib/plans.ts`.
+- **Thanh toán:** 1 gói 20.000đ / 30 ngày, quét VietQR qua payOS hoặc SePay (tự kích hoạt khi tiền về), hoặc chuyển khoản tay rồi bạn bấm xác nhận trong `/admin`. Sửa giá trong `src/lib/plans.ts`.
 - **Trang `/admin`:** xem người dùng, doanh thu, gia hạn tay.
 
 ## Cách xếp file trên Drive
@@ -60,9 +60,9 @@ Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp
 2. Tạo **kênh thanh toán**, lấy `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`.
 3. Sau khi web đã có địa chỉ thật (bước 5), đặt **Webhook URL** của kênh thanh toán là `https://<web của bạn>/api/payments/payos`.
 
-**Nếu muốn dùng SePay thay cho payOS:**
-- Đặt `PAYMENT_PROVIDER=sepay`, cùng `SEPAY_BANK` (mã ngân hàng, ví dụ `MBBank`), `SEPAY_ACCOUNT_NUMBER`, `SEPAY_ACCOUNT_NAME`.
-- Trong SePay, tạo webhook trỏ về `https://<web>/api/payments/sepay`, kiểu xác thực **API Key**, và đặt cùng giá trị vào `SEPAY_API_KEY`.
+**Ngân hàng payOS không hỗ trợ (ví dụ VietinBank):** đặt `BANK_NAME` (tên ngắn, ví dụ `VietinBank`, `MBBank`), `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`, rồi chọn một trong hai:
+- `PAYMENT_PROVIDER=manual`: trang thanh toán hiện VietQR có sẵn số tiền + nội dung. Thấy tiền về thì bạn bấm **Đã nhận tiền** ở đơn đó trong `/admin`. Không mất phí.
+- `PAYMENT_PROVIDER=sepay`: tự kích hoạt. Trong SePay, tạo webhook trỏ về `https://<web>/api/payments/sepay`, kiểu xác thực **API Key**, và đặt cùng giá trị vào `SEPAY_API_KEY`.
 
 ### 4. Đưa web lên mạng
 

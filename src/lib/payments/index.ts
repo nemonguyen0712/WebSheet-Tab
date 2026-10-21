@@ -8,11 +8,13 @@ import type { Plan } from "../plans";
  * - "payos": payOS hosted checkout page with VietQR; payOS calls /api/payments/payos when paid.
  * - "sepay": our own page shows a VietQR for your bank account; SePay watches the account and
  *   calls /api/payments/sepay when a transfer with the order code arrives.
+ * - "manual": the same VietQR page, but you confirm each transfer yourself in /admin.
  */
-export type Provider = "payos" | "sepay";
+export type Provider = "payos" | "sepay" | "manual";
 
 export function paymentProvider(): Provider {
-  return process.env.PAYMENT_PROVIDER === "sepay" ? "sepay" : "payos";
+  const p = process.env.PAYMENT_PROVIDER;
+  return p === "sepay" || p === "manual" ? p : "payos";
 }
 
 /** Transfer note for an order; short because some banks cut notes at 9 characters. */
@@ -105,11 +107,21 @@ export async function refreshOrder(order: Order): Promise<Order> {
   return order;
 }
 
-/** VietQR image for SePay mode (bank + account from env). */
-export function sepayQrUrl(order: Pick<Order, "order_code" | "amount">) {
+/** Your bank account, shown on the payment page in SePay and manual modes. */
+export function bankAccount() {
+  return {
+    bank: process.env.BANK_NAME ?? "",
+    number: process.env.BANK_ACCOUNT_NUMBER ?? "",
+    name: process.env.BANK_ACCOUNT_NAME ?? "",
+  };
+}
+
+/** VietQR image with the amount and transfer note filled in (SePay's free QR service, works for any bank). */
+export function bankQrUrl(order: Pick<Order, "order_code" | "amount">) {
+  const { bank, number } = bankAccount();
   const params = new URLSearchParams({
-    acc: process.env.SEPAY_ACCOUNT_NUMBER ?? "",
-    bank: process.env.SEPAY_BANK ?? "",
+    acc: number,
+    bank,
     amount: String(order.amount),
     des: transferNote(order.order_code),
   });
