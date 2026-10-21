@@ -21,6 +21,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static assets and payment webhooks (which come from payOS/SePay, not a browser).
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|pdfjs/|alphatab/|api/payments/|.*\\.(?:png|jpg|svg|webp)$).*)"],
+  // Skip static assets, payment webhooks (which come from payOS/SePay, not a browser) and the cron's health check.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|pdfjs/|alphatab/|api/payments/|api/health|.*\\.(?:png|jpg|svg|webp)$).*)"],
 };
