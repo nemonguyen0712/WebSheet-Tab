@@ -147,12 +147,15 @@ export async function refreshOrder(order: Order): Promise<Order> {
 }
 
 /**
- * The bank account buyers pay into (manual and SePay modes): VietinBank 0908928517, Huỳnh Nhật Anh.
- * BANK_NAME / BANK_ACCOUNT_NUMBER / BANK_ACCOUNT_NAME override it.
+ * The bank account buyers pay into (manual and SePay modes): VietinBank 0908928517, Huỳnh Nhật Anh —
+ * the same account as the owner's own VietinBank QR (bank BIN 970415). BANK_NAME / BANK_ACCOUNT_NUMBER /
+ * BANK_ACCOUNT_NAME override it.
  */
 export function bankAccount() {
   return {
     bank: process.env.BANK_NAME || "VietinBank",
+    /** How VietQR identifies the bank: the BIN for the built-in account, else the short name (e.g. MBBank). */
+    qrBankId: process.env.BANK_NAME || "970415",
     number: process.env.BANK_ACCOUNT_NUMBER || "0908928517",
     name: process.env.BANK_ACCOUNT_NAME || "HUYNH NHAT ANH",
   };
@@ -171,7 +174,7 @@ export function bankTransferNote(order: Pick<Order, "order_code" | "provider">, 
  * number) whose QR already contains the amount and the transfer note, so customers just scan and confirm.
  */
 export function bankQrUrl(amount: number, note: string) {
-  const { bank, number, name } = bankAccount();
+  const { qrBankId, number, name } = bankAccount();
   const params = new URLSearchParams({ amount: String(amount), addInfo: note, accountName: name });
-  return `https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(number)}-print.png?${params}`;
+  return `https://img.vietqr.io/image/${encodeURIComponent(qrBankId)}-${encodeURIComponent(number)}-print.png?${params}`;
 }
