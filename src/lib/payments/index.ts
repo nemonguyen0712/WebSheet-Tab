@@ -42,13 +42,39 @@ export interface Order {
   paid_at: string | null;
 }
 
+/** A buyer has this long to pay an order; after that its QR is gone and it no longer counts as open. */
+export const ORDER_TTL_MINUTES = 10;
 /**
- * Returns where to send the buyer to pay. A buyer has at most one unpaid order: buying again
- * reopens it instead of creating another, so /admin never shows duplicates to match against.
+ * An expired order stays in the database (still "pending") for this long, so a transfer made just before
+ * the deadline can still be confirmed in /admin or by the SePay webhook; then purgeStaleOrders deletes it.
+ */
+const STALE_ORDER_HOURS = 24;
+
+export function orderExpiresAt(order: Pick<Order, "created_at">) {
+  return Date.parse(order.created_at) + ORDER_TTL_MINUTES * 60_000;
+}
+
+/** Unpaid and past its 10 minutes. */
+export function isExpired(order: Pick<Order, "status" | "created_at">) {
+  return order.status === "pending" && Date.now() >= orderExpiresAt(order);
+}
+
+/** Deletes unpaid orders (expired or cancelled) older than a day. Cheap; runs on checkout and in /admin. */
+export async function purgeStaleOrders() {
+  if (!supabaseConfigured()) return;
+  const before = new Date(Date.now() - STALE_ORDER_HOURS * 3_600_000).toISOString();
+  const { error } = await createAdminClient().from("orders").delete().in("status", ["pending", "cancelled"]).lt("created_at", before);
+  if (error) console.error("purgeStaleOrders", error);
+}
+
+/**
+ * Returns where to send the buyer to pay. A buyer has at most one open order: buying again within
+ * its 10 minutes reopens it instead of creating another, so /admin never shows duplicates to match against.
  */
 export async function startCheckout(user: { id: string; phone: string }, plan: Plan): Promise<string> {
   const provider = paymentProvider();
   const admin = createAdminClient();
+  await purgeStaleOrders();
 
   const { data: pending } = await admin
     .from("orders")
@@ -58,7 +84,8 @@ export async function startCheckout(user: { id: string; phone: string }, plan: P
     .order("created_at", { ascending: false });
   for (const old of (pending ?? []) as Order[]) {
     const fresh = await refreshOrder(old);
-    if (fresh.status !== "pending") continue;
+    // An expired one is left alone: it may still be confirmed if paid just in time (see STALE_ORDER_HOURS).
+    if (fresh.status !== "pending" || isExpired(fresh)) continue;
     const reusable = fresh.provider === provider && fresh.plan === plan.id && fresh.amount === plan.price;
     if (reusable && provider !== "payos") return `${await siteUrl()}/thanh-toan/${fresh.order_code}`;
     if (reusable && fresh.checkout_url) return fresh.checkout_url;
@@ -104,7 +131,7 @@ export async function markPaid(orderCode: number, amount: number, ref: string): 
   return Boolean(data);
 }
 
-/** The buyer's open order, if any (shown on the pricing page as "continue paying"). */
+/** The buyer's open (unexpired) order, if any (shown on the pricing page as "continue paying"). */
 export async function getPendingOrder(userId: string): Promise<Order | null> {
   if (!supabaseConfigured()) return null;
   const { data } = await createAdminClient()
@@ -112,6 +139,7 @@ export async function getPendingOrder(userId: string): Promise<Order | null> {
     .select("*")
     .eq("user_id", userId)
     .eq("status", "pending")
+    .gt("created_at", new Date(Date.now() - ORDER_TTL_MINUTES * 60_000).toISOString())
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

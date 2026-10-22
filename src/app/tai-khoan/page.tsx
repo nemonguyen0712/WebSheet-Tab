@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatPhone } from "@/lib/account";
+import { isExpired } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { MAX_DEVICES, getViewer } from "@/lib/viewer";
@@ -35,6 +36,8 @@ export default async function AccountPage() {
           .limit(20),
       ])
     : [{ data: [] }, { data: [] }];
+  // An unpaid order past its 10 minutes is gone for the buyer (its QR no longer works).
+  const history = (orders ?? []).filter((o) => !isExpired(o));
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 px-4 py-8">
@@ -87,11 +90,11 @@ export default async function AccountPage() {
         </ul>
       </section>
 
-      {orders && orders.length > 0 && (
+      {history.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface p-5">
           <h2 className="font-semibold">Lịch sử thanh toán</h2>
           <ul className="mt-3 divide-y divide-border text-sm">
-            {orders.map((o) => {
+            {history.map((o) => {
               const what = `#${o.order_code} · ${getPlan(o.plan)?.label ?? o.plan} · ${formatVnd(o.amount)}`;
               return o.status === "pending" ? (
                 // Not paid yet: the row leads back to its QR / payment page.

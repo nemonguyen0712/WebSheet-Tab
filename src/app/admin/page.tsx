@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
-import { getOrder, markPaid } from "@/lib/payments";
+import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
@@ -72,6 +72,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     usersQuery = usersQuery.or(digits.length >= 3 ? `username.ilike.%${term}%,phone.like.%${digits}%` : `username.ilike.%${term}%`);
   }
 
+  await purgeStaleOrders();
   // The same search box filters orders by phone, which is the transfer note in manual mode.
   let ordersQuery = admin
     .from("orders")
@@ -218,7 +219,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <h2 className="font-semibold">Đơn gần đây</h2>
         <p className="mt-1 text-sm text-muted">
           Chuyển khoản tay: nội dung chuyển khoản là số điện thoại của khách. Thấy trong app ngân hàng có khoản đúng số tiền, đúng
-          số điện thoại, sau giờ tạo đơn thì bấm “Đã nhận tiền”, gói được cộng ngay.
+          số điện thoại, sau giờ tạo đơn thì bấm “Đã nhận tiền”, gói được cộng ngay. Đơn chưa trả hết hạn sau {ORDER_TTL_MINUTES} phút
+          (khách không quét được mã nữa) nhưng vẫn xác nhận được trong 24 giờ, sau đó tự xoá.
         </p>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
@@ -252,7 +254,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
                       {o.status === "pending" ? (
                         <form action={confirmOrder} className="inline-flex items-center gap-2">
                           <input type="hidden" name="order" value={o.order_code} />
-                          <StatusBadge status={o.status} />
+                          <StatusBadge status={isExpired(o) ? "expired" : o.status} />
                           <button className="h-8 rounded-md border border-border px-2 text-xs hover:border-accent">Đã nhận tiền</button>
                         </form>
                       ) : (

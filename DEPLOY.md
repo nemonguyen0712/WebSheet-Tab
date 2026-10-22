@@ -89,6 +89,7 @@ Tiền vào tài khoản **VietinBank 0908928517 — HUYNH NHAT ANH** (đã cài
 
 1. `PAYMENT_PROVIDER=manual` đã đặt sẵn trong `render.yaml` (mặc định cũng là `manual`), không cần làm gì. (Nút nhắn Zalo dùng số hỗ trợ `0908928517` có sẵn.)
 2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
+   - Mã QR của mỗi đơn chỉ dùng được **10 phút**. Quá 10 phút đơn biến mất với khách (khách bấm tạo đơn mới), còn trong `/admin` đơn hiện nhãn **Hết hạn** nhưng vẫn bấm **Đã nhận tiền** được trong 24 giờ, phòng khi khách chuyển sát giờ. Sau 24 giờ đơn chưa trả tự bị xoá khỏi database.
 3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
    - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
    - [ ] Bấm **Đã nhận tiền** trong `/admin`, trang thanh toán của khách tự chuyển sang "Thanh toán thành công".

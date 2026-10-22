@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { bankAccount, bankQrUrl, bankTransferNote, getOrder, refreshOrder } from "@/lib/payments";
+import { ORDER_TTL_MINUTES, bankAccount, bankQrUrl, bankTransferNote, getOrder, isExpired, orderExpiresAt, refreshOrder } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { ZALO_URL } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
-import { OrderPoller } from "./OrderPoller";
+import { ExpiryCountdown, OrderPoller } from "./OrderPoller";
 
 export const metadata: Metadata = { title: "Thanh toán" };
 
@@ -27,6 +27,8 @@ export default async function PaymentPage({
   const plan = getPlan(order.plan);
   const bank = bankAccount();
   const note = bankTransferNote(order, viewer.phone);
+  const expired = isExpired(order);
+  const expiresAt = orderExpiresAt(order);
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -60,9 +62,33 @@ export default async function PaymentPage({
           </>
         ) : null}
 
-        {order.status === "pending" && !huy && (
+        {expired && !huy && (
           <>
-            <OrderPoller orderCode={order.order_code} />
+            <p className="mt-6 font-semibold">Đơn đã hết hạn</p>
+            <p className="mt-1 text-sm text-muted">
+              Mã QR chỉ dùng được trong {ORDER_TTL_MINUTES} phút. Nếu bạn đã chuyển khoản trước khi hết hạn, nhắn Zalo cho mình để
+              được kích hoạt.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <Link href="/dang-ky" className="inline-flex h-11 items-center rounded-xl bg-accent px-5 font-medium text-accent-fg">
+                Tạo đơn mới
+              </Link>
+              <a
+                href={ZALO_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 items-center rounded-xl border border-border px-5 hover:border-accent"
+              >
+                Nhắn Zalo
+              </a>
+            </div>
+          </>
+        )}
+
+        {order.status === "pending" && !expired && !huy && (
+          <>
+            <OrderPoller orderCode={order.order_code} expiresAt={expiresAt} />
+            <ExpiryCountdown expiresAt={expiresAt} />
             {order.provider === "payos" ? (
               order.checkout_url && (
                 <a
