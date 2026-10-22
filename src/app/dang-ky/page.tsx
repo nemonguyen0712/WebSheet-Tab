@@ -23,8 +23,8 @@ async function checkout(formData: FormData) {
   redirect(url);
 }
 
-export default async function PricingPage({ searchParams }: { searchParams: Promise<{ loi?: string }> }) {
-  const { loi } = await searchParams;
+export default async function PricingPage({ searchParams }: { searchParams: Promise<{ loi?: string; khoa?: string }> }) {
+  const { loi, khoa } = await searchParams;
   const viewer = await getViewer();
   const plan = PLANS[0];
   const pending = viewer ? await getPendingOrder(viewer.id) : null;
@@ -35,6 +35,27 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Đăng ký</h1>
         <p className="mt-2 text-muted">Xem toàn bộ kho Oliu, bài mới được cập nhật liên tục.</p>
       </div>
+      {khoa && !viewer?.active && (
+        // Sent here from a locked Oliu Solo / Oliu Melody card or page (see lib/access.ts).
+        <div className="mt-4 flex gap-2.5 rounded-lg border border-accent/40 bg-accent-soft px-3 py-2.5 text-sm">
+          <svg viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+          </svg>
+          <p>
+            {viewer?.paidUntil ? (
+              <>
+                <b>Gói của bạn đã hết hạn</b> ngày {formatDate(viewer.paidUntil)}. Gia hạn để xem tiếp Oliu Solo và Oliu Melody.
+              </>
+            ) : (
+              <>
+                <b>Bạn chưa đăng ký gói.</b> Oliu Solo và Oliu Melody chỉ dành cho tài khoản đã đăng ký
+                {viewer ? "." : ", bạn đăng nhập rồi mua gói bên dưới nhé."}
+              </>
+            )}
+          </p>
+        </div>
+      )}
       {viewer?.active && viewer.paidUntil && (
         <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-center text-sm">
           Gói của bạn còn hạn đến <b>{formatDate(viewer.paidUntil)}</b>. Gia hạn thì 30 ngày mới được cộng nối tiếp vào hạn hiện tại.

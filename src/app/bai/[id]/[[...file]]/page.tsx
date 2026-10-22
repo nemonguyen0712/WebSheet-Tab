@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { KindBadge } from "@/components/KindBadge";
-import { Paywall } from "@/components/Paywall";
-import { ImagePreview, LockedBlock, NotationPreview } from "@/components/previews";
 import { ImageViewer } from "@/components/viewers/ImageViewer";
 import { NotationViewer } from "@/components/viewers/NotationViewer";
 import { PdfViewer } from "@/components/viewers/PdfViewer";
 import { TextViewer } from "@/components/viewers/TextViewer";
 import { ViewerError } from "@/components/viewers/ViewerError";
+import { lockedRedirect } from "@/lib/access";
 import { categorySlug, categoryTitle } from "@/lib/categories";
 import { fileLabel, songSubtitle } from "@/lib/kinds";
 import { formatPhone } from "@/lib/account";
 import { songHref } from "@/lib/links";
 import { signedFileUrl } from "@/lib/file-token";
-import { trimmedText } from "@/lib/preview";
 import { getSong, getTabText } from "@/lib/source";
 import type { TabFile } from "@/lib/types";
 import { type Viewer, getViewer } from "@/lib/viewer";
@@ -34,8 +32,10 @@ export default async function SongPage({ params }: Props) {
 
   const current = fileParam?.[0] ? song.files.find((f) => f.id === fileParam[0]) : song.files[0];
   if (!current) notFound();
+  // Paying accounts only: anyone else goes to the plan page (or logs in again on this device).
+  const locked = lockedRedirect(viewer, songHref(song, current));
+  if (locked || !viewer) redirect(locked ?? "/dang-ky");
   const sub = songSubtitle(song);
-  const here = songHref(song, current);
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-28">
@@ -80,22 +80,8 @@ export default async function SongPage({ params }: Props) {
         </nav>
       )}
 
-      {!viewer?.active && (
-        <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-sm">
-          Bạn đang xem bản xem trước (1/3 đầu).{" "}
-          <Link href={viewer ? "/dang-ky" : `/dang-nhap?next=${encodeURIComponent(here)}`} className="font-medium text-accent underline underline-offset-4">
-            Đăng ký
-          </Link>{" "}
-          để xem toàn bộ.
-        </p>
-      )}
-
       <div className="mt-4">
-        {viewer?.active ? (
-          <FullView key={current.id} tab={current} viewer={viewer} />
-        ) : (
-          <PreviewView key={current.id} tab={current} viewer={viewer} returnTo={here} />
-        )}
+        <FullView key={current.id} tab={current} viewer={viewer} />
       </div>
     </main>
   );
@@ -121,34 +107,3 @@ async function FullView({ tab, viewer }: { tab: TabFile; viewer: Viewer }) {
   }
 }
 
-async function PreviewView({ tab, viewer, returnTo }: { tab: TabFile; viewer: Viewer | null; returnTo: string }) {
-  const paywall = <Paywall viewer={viewer} returnTo={returnTo} />;
-  const previewUrl = `/api/preview/${encodeURIComponent(tab.id)}`;
-  switch (tab.kind) {
-    case "pdf":
-    case "image":
-      return (
-        <ImagePreview src={previewUrl} alt={tab.name}>
-          {paywall}
-        </ImagePreview>
-      );
-    case "notation":
-      return <NotationPreview src={previewUrl}>{paywall}</NotationPreview>;
-    case "text": {
-      let preview: ReturnType<typeof trimmedText> | null = null;
-      try {
-        preview = trimmedText(await getTabText(tab));
-      } catch {}
-      return (
-        <div>
-          {preview && (
-            <div className="overflow-x-auto rounded-xl border border-border bg-surface p-4 font-mono text-[15px] leading-relaxed whitespace-pre sm:p-6">
-              {preview.lines.join("\n")}
-            </div>
-          )}
-          <LockedBlock lines={Math.min(16, Math.max(6, Math.ceil((preview?.hiddenLines ?? 30) / 3)))}>{paywall}</LockedBlock>
-        </div>
-      );
-    }
-  }
-}

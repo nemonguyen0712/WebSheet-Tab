@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { SongBrowser } from "@/components/SongBrowser";
+import { lockedRedirect } from "@/lib/access";
 import { categorySlug, categoryTitle } from "@/lib/categories";
 import { listSongs } from "@/lib/source";
+import { getViewer } from "@/lib/viewer";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -20,8 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const found = await findCategory((await params).slug);
+  const { slug } = await params;
+  const [found, viewer] = await Promise.all([findCategory(slug), getViewer()]);
   if (!found) notFound();
+  const locked = lockedRedirect(viewer, `/${slug}`);
+  if (locked) redirect(locked);
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-10">

@@ -65,11 +65,10 @@ Lệnh này tạo file **`deploy.env`** (đã được gitignore, không đẩy 
 Không cần đặt `NEXT_PUBLIC_SITE_URL`: web tự nhận địa chỉ từ trình duyệt. Muốn dùng tên miền riêng: service → **Settings → Custom Domains**.
 
 ### 3. Kiểm tra sau khi deploy
-- [ ] Trang chủ hiện 2 thẻ Oliu Solo / Oliu Melody, bấm vào thấy đủ bài từ Drive.
-- [ ] Mở một bài khi chưa đăng nhập: thấy 1/3 đầu, phần dưới mờ.
-- [ ] Đăng nhập `admin`: thấy nút **Quản trị**, xem được bài đầy đủ, có chữ in mờ.
+- [ ] Trang chủ hiện 2 thẻ Oliu Solo / Oliu Melody. Khi chưa đăng nhập, thẻ có nhãn **Chưa đăng ký gói**, bấm vào thì sang trang mua gói kèm thông báo.
+- [ ] Đăng nhập `admin`: thấy nút **Quản trị**, bấm thẻ thấy đủ bài từ Drive, xem được bài đầy đủ, có chữ in mờ.
 - [ ] Mở `/admin` được.
-- [ ] Tạo thử một tài khoản khách bằng số điện thoại khác. Xem trước được nhưng chưa xem đầy đủ được.
+- [ ] Tạo thử một tài khoản khách bằng số điện thoại khác. Bấm thẻ Solo/Melody thì sang trang mua gói, chưa xem được bài.
 - [ ] Trên điện thoại: nhấn giữ vào sheet không hiện menu lưu ảnh.
 
 Nếu build hoặc trang bị lỗi: Render → service **oliu** → **Logs** (hoặc **Events** → bấm vào lần deploy lỗi) → copy log gửi Claude.

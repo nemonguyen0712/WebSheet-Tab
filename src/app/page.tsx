@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CategoryCard } from "@/components/CategoryCard";
 import { SongBrowser } from "@/components/SongBrowser";
+import { lockedRedirect } from "@/lib/access";
 import { listCategories } from "@/lib/categories";
 import { PLANS, formatVnd } from "@/lib/plans";
 import { listSongs } from "@/lib/source";
@@ -43,9 +44,10 @@ export default async function Home() {
         <>
           {/* One card per section (Oliu Solo, Oliu Melody); each opens its own page with its own search. */}
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {categories.map((c) => (
-              <CategoryCard key={c.slug} category={c} />
-            ))}
+            {categories.map((c) => {
+              const locked = lockedRedirect(viewer, `/${c.slug}`);
+              return <CategoryCard key={c.slug} category={c} href={locked ?? `/${c.slug}`} locked={Boolean(locked)} />;
+            })}
           </div>
           {loose.length > 0 && (
             <section className="mt-8">

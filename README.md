@@ -2,7 +2,7 @@
 
 Web bán quyền xem sheet/tab guitar theo tháng. Sheet/tab lấy từ một thư mục Google Drive **riêng tư**. Bạn upload lên Drive, khoảng 5 phút sau web có bài mới.
 
-- **Người chưa trả phí:** thấy danh sách bài, vào bài thì thấy 1/3 đầu của sheet, phần còn lại bị làm mờ ngay trên server.
+- **Người chưa trả phí:** thấy trang chủ với 2 thẻ Oliu Solo / Oliu Melody có nhãn "Chưa đăng ký gói". Bấm vào thẻ (hoặc mở thẳng link bài) thì được đưa sang trang mua gói kèm thông báo chưa đăng ký. Không có bản xem trước.
 - **Người đã trả phí:** xem toàn bộ PDF, ảnh và tab Guitar Pro (chỉ xem, không phát tiếng). Sheet có in mờ số điện thoại người xem, không có nút tải về, mỗi tài khoản chỉ dùng 1 thiết bị (đăng nhập máy khác thì máy cũ bị đăng xuất).
 - **Tài khoản:** tạo 2 bước (nhập số điện thoại, rồi chọn tên đăng nhập + mật khẩu), không gửi SMS. Đăng nhập bằng tên đăng nhập hoặc số điện thoại. Khách quên mật khẩu thì liên hệ bạn, bạn đặt lại trong `/admin`.
 - **Thanh toán:** 1 gói 20.000đ / 30 ngày, mặc định là chuyển khoản tay: khách quét VietQR có sẵn số tiền, nội dung là số điện thoại tài khoản của họ, bạn bấm xác nhận trong `/admin`. Có thể chuyển sang payOS hoặc SePay để tự kích hoạt khi tiền về. Sửa giá trong `src/lib/plans.ts`.
