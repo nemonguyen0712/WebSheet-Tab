@@ -118,10 +118,25 @@ async function driveChildren(folderId: string): Promise<Entry[]> {
 
 const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true });
 
-/** Drops a picture when another file already covers the same part (it is usually a snapshot of that sheet). */
-function withoutDuplicatePictures(song: Song) {
-  const covered = new Set(song.files.filter((f) => f.kind !== "image").map((f) => fold(partName(f, song.title))));
-  song.files = song.files.filter((f) => f.kind !== "image" || !covered.has(fold(partName(f, song.title))));
+/**
+ * One file per part ("Intro", "Solo", the whole song…): files named for the same part hold the same sheet
+ * in different formats, so only the lightest to serve is kept. Pictures come last (stamping one decodes the
+ * whole image, ~150 MB for a long sheet); otherwise the smallest file wins.
+ */
+function onePerPart(song: Song) {
+  const cost = (f: TabFile) => [f.kind === "image" ? 1 : 0, f.size ?? 0];
+  const best = new Map<string, TabFile>();
+  for (const f of song.files) {
+    const key = fold(partName(f, song.title));
+    const kept = best.get(key);
+    if (!kept) {
+      best.set(key, f);
+      continue;
+    }
+    const [a, b] = [cost(f), cost(kept)];
+    if (a[0] < b[0] || (a[0] === b[0] && a[1] < b[1])) best.set(key, f);
+  }
+  song.files = [...best.values()];
 }
 
 function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
@@ -144,7 +159,7 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
     if (f.modifiedTime && (!song.modifiedTime || f.modifiedTime > song.modifiedTime)) song.modifiedTime = f.modifiedTime;
   }
   for (const song of songs.values()) {
-    withoutDuplicatePictures(song);
+    onePerPart(song);
     song.files.sort(
       (a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || collator.compare(a.name, b.name),
     );

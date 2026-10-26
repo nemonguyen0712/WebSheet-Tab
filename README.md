@@ -26,7 +26,7 @@ Thư mục gốc/
 Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp3-5` `.gpx`), MusicXML, tab chữ (`.txt`, Google Docs). Âm thanh, video và file khác bị bỏ qua.
 
 - **Tên nút** lấy từ tên file, bỏ phần trùng tên bài: `INTRO Tên bài.gp` → **Intro**, `SOLO Tên bài.pdf` → **Solo**. File chỉ mang tên bài thì nút ghi **Tab/Sheet**. Người xem không thấy loại file (PDF, Guitar Pro, ảnh).
-- **Ảnh** chỉ hiện khi chưa có PDF / Guitar Pro / tab chữ nào cho cùng phần đó (ảnh thường là bản chụp lại sheet).
+- **Mỗi phần chỉ hiện 1 file.** Nhiều file cùng tên phần (vd `INTRO ….pdf`, `INTRO ….gp`, `INTRO ….png`) được coi là cùng một sheet, web giữ file nhẹ nhất: ưu tiên PDF / Guitar Pro / tab chữ hơn ảnh (in tên lên ảnh tốn RAM nhất), rồi chọn file dung lượng nhỏ nhất. Hai bản khác nhau thật thì đặt tên khác nhau, vd `INTRO #1` / `INTRO #2`.
 - **Video hướng dẫn / Backing track:** tạo file `.txt` tên bắt đầu bằng `video` (hoặc `hướng dẫn`) / `backing` (hoặc `beat`), bên trong chỉ cần dán link YouTube. Google Docs cùng tên, hoặc file `.url` kéo từ trình duyệt ra cũng được. Chưa có file thì nút hiện "Chưa có". Bấm nút mở YouTube ở tab mới.
 
 ---
