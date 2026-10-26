@@ -124,7 +124,7 @@ Nên bật thêm:
 
 ## D. Vận hành hằng ngày
 
-- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Khoảng 5 phút sau bài lên web, ở trang **Oliu Solo** (`/solo`) hoặc **Oliu Melody** (`/melody`). Mỗi thư mục cấp 1 trên Drive là một mục như vậy trên trang chủ.
+- **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Đặt tên file theo phần (`INTRO …`, `SOLO …`) để nút trên web ghi đúng tên phần. Có video hướng dẫn / backing track trên YouTube thì thêm file `video.txt` / `backing.txt` chứa link (xem README, mục "Cách xếp file trên Drive"). Khoảng 5 phút sau bài lên web, ở trang **Oliu Solo** (`/solo`) hoặc **Oliu Melody** (`/melody`). Mỗi thư mục cấp 1 trên Drive là một mục như vậy trên trang chủ.
 - **Khách quên mật khẩu:** khách nhắn Zalo → `/admin` → tìm khách → nhập mật khẩu mới → **Đặt lại MK** → gửi mật khẩu cho khách và nhắc họ đổi lại.
 - **Khách chuyển khoản tay hoặc bạn muốn tặng ngày:** `/admin` → **+30 ngày**.
 - **File lớn:** PDF/ảnh vài chục MB vẫn mở được nhưng chậm và tốn RAM của máy chủ (gói Free chỉ 512MB), nên nén bớt trước khi up.

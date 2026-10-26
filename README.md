@@ -13,16 +13,21 @@ Web bán quyền xem sheet/tab guitar theo tháng. Sheet/tab lấy từ một th
 ```
 Thư mục gốc/
 ├── ANH MỚI CHÍNH LÀ NGƯỜI EM YÊU/    ← mỗi bài một thư mục
-│   ├── GIANG TẤU ....pdf              ← hiện
-│   ├── INTRO ....gp                   ← hiện (tab Guitar Pro, không có tiếng)
-│   ├── ĐK ...#1.png                   ← hiện
-│   ├── backing track.wav              ← tự ẩn
-│   └── clip hướng dẫn.mp4             ← tự ẩn
+│   ├── GIANG TẤU ....pdf              ← hiện, nút "Giang tấu"
+│   ├── INTRO ....gp                   ← hiện, nút "Intro" (tab Guitar Pro, không có tiếng)
+│   ├── INTRO ....png                  ← tự ẩn (đã có "Intro" ở file khác)
+│   ├── video.txt                      ← nút "Video hướng dẫn" (trong file: link YouTube)
+│   ├── backing.txt                    ← nút "Backing track" (trong file: link YouTube)
+│   └── backing track.wav              ← tự ẩn
 └── Bolero/                            ← có thể gom bài theo thể loại
     └── Tên bài - Ca sĩ/ ...
 ```
 
 Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp3-5` `.gpx`), MusicXML, tab chữ (`.txt`, Google Docs). Âm thanh, video và file khác bị bỏ qua.
+
+- **Tên nút** lấy từ tên file, bỏ phần trùng tên bài: `INTRO Tên bài.gp` → **Intro**, `SOLO Tên bài.pdf` → **Solo**. File chỉ mang tên bài thì nút ghi **Tab/Sheet**. Người xem không thấy loại file (PDF, Guitar Pro, ảnh).
+- **Ảnh** chỉ hiện khi chưa có PDF / Guitar Pro / tab chữ nào cho cùng phần đó (ảnh thường là bản chụp lại sheet).
+- **Video hướng dẫn / Backing track:** tạo file `.txt` tên bắt đầu bằng `video` (hoặc `hướng dẫn`) / `backing` (hoặc `beat`), bên trong chỉ cần dán link YouTube. Google Docs cùng tên, hoặc file `.url` kéo từ trình duyệt ra cũng được. Chưa có file thì nút hiện "Chưa có". Bấm nút mở YouTube ở tab mới.
 
 ---
 

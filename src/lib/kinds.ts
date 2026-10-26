@@ -1,4 +1,4 @@
-import type { Song, TabFile, TabKind } from "./types";
+import type { LinkKind, Song, TabFile, TabKind } from "./types";
 
 const EXTENSIONS: Record<TabKind, string[]> = {
   pdf: ["pdf"],
@@ -21,15 +21,20 @@ export function detectKind(ext: string, mimeType: string): TabKind | null {
   return null;
 }
 
-export const KIND_LABELS: Record<TabKind, string> = {
-  pdf: "PDF",
-  notation: "Guitar Pro",
-  text: "Tab chữ",
-  image: "Ảnh",
-};
-
 /** Order files are shown in on a song page. */
 export const KIND_ORDER: TabKind[] = ["pdf", "notation", "image", "text"];
+
+/**
+ * A link file rather than a sheet: a .txt / .url file or Google Doc named "video…" / "hướng dẫn…" (tutorial)
+ * or "backing…" / "beat…" (backing track), whose text is a YouTube link.
+ */
+export function detectLinkKind(name: string, ext: string, mimeType: string): LinkKind | null {
+  if (!(ext === "txt" || ext === "url" || mimeType === GOOGLE_DOC_MIME)) return null;
+  const base = fold(ext ? splitExt(name)[0] : name).trim();
+  if (/^(backing|beat)/.test(base)) return "backing";
+  if (/^(video|huong dan)/.test(base)) return "video";
+  return null;
+}
 
 export function splitExt(name: string): [string, string] {
   const dot = name.lastIndexOf(".");
@@ -65,10 +70,11 @@ export function songSubtitle(song: Pick<Song, "artist" | "category">): string {
 }
 
 /**
- * Short name for a file inside its song, with the song title removed:
- * "INTRO ANH MỚI CHÍNH LÀ NGƯỜI EM YÊU#1.png" in song "ANH MỚI CHÍNH LÀ NGƯỜI EM YÊU" → "INTRO #1".
+ * The part a file covers, from its name with the song title removed:
+ * "INTRO ANH MỚI CHÍNH LÀ NGƯỜI EM YÊU#1.png" in song "ANH MỚI CHÍNH LÀ NGƯỜI EM YÊU" → "Intro #1".
+ * "" when the name is just the song title (the whole song).
  */
-export function fileLabel(file: Pick<TabFile, "name" | "ext" | "kind">, songTitle: string): string {
+export function partName(file: Pick<TabFile, "name" | "ext">, songTitle: string): string {
   const base = (file.ext ? splitExt(file.name)[0] : file.name).normalize("NFC").replace(/_/g, " ");
   const chars = [...base];
   let folded = "";
@@ -80,11 +86,33 @@ export function fileLabel(file: Pick<TabFile, "name" | "ext" | "kind">, songTitl
   });
   const needle = fold(songTitle.normalize("NFC")).trim();
   const at = needle ? folded.indexOf(needle) : -1;
-  if (at === -1) return base.trim();
-  const start = charAt[at];
-  const end = charAt[at + needle.length - 1] + 1;
-  const rest = `${chars.slice(0, start).join("")} ${chars.slice(end).join("")}`
-    .replace(/\s+/g, " ")
-    .replace(/^[\s\-–_·.]+|[\s\-–_·.]+$/g, "");
-  return rest || KIND_LABELS[file.kind];
+  let rest = base;
+  if (at !== -1) {
+    const start = charAt[at];
+    const end = charAt[at + needle.length - 1] + 1;
+    rest = `${chars.slice(0, start).join("")} ${chars.slice(end).join("")}`;
+  }
+  rest = rest.replace(/\s+/g, " ").replace(/^[\s\-–_·.]+|[\s\-–_·.]+$/g, "");
+  // "INTRO" → "Intro", "GIANG TẤU" → "Giang tấu", "solo" → "Solo"; mixed case is otherwise left as typed.
+  if (rest === rest.toLocaleUpperCase("vi")) rest = rest.toLocaleLowerCase("vi");
+  return rest.charAt(0).toLocaleUpperCase("vi") + rest.slice(1);
+}
+
+/**
+ * What each file of a song is called on the site: its part ("Intro", "Solo"…) or "Tab/Sheet" for the
+ * whole song, numbered when two files would read the same. Keyed by file id.
+ */
+export function sheetLabels(song: Pick<Song, "title" | "files">): Map<string, string> {
+  const names = song.files.map((f) => partName(f, song.title) || "Tab/Sheet");
+  const total = new Map<string, number>();
+  for (const n of names) total.set(fold(n), (total.get(fold(n)) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return new Map(
+    song.files.map((f, i) => {
+      const key = fold(names[i]);
+      const nth = (seen.get(key) ?? 0) + 1;
+      seen.set(key, nth);
+      return [f.id, total.get(key)! > 1 ? `${names[i]} ${nth}` : names[i]];
+    }),
+  );
 }

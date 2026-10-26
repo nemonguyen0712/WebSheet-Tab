@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { categoryRank } from "@/lib/categories";
-import { KIND_LABELS, KIND_ORDER, fileLabel, fold, songSubtitle } from "@/lib/kinds";
+import { fold, sheetLabels, songSubtitle } from "@/lib/kinds";
 import { songHref } from "@/lib/links";
 import { NEW_DAYS } from "@/lib/site";
-import type { Song, TabFile, TabKind } from "@/lib/types";
-import { KindBadge } from "./KindBadge";
+import type { Song, TabFile } from "@/lib/types";
 
 type Sort = "az" | "recent";
 
@@ -17,7 +16,8 @@ interface Indexed {
   hay: string;
   files: { file: TabFile; label: string; hay: string }[];
   modified: number;
-  kinds: Map<TabKind, number>;
+  /** Named parts ("Intro", "Solo"…), shown on the card. */
+  parts: string[];
 }
 
 const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true });
@@ -28,7 +28,6 @@ const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true })
  */
 export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?: boolean }) {
   const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<TabKind | "all">("all");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState<Sort>("az");
   const [now, setNow] = useState<number | null>(null);
@@ -38,8 +37,6 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     setQuery(p.get("q") ?? "");
-    const k = p.get("loai");
-    if (k && (KIND_ORDER as string[]).includes(k)) setKind(k as TabKind);
     setCategory(p.get("thumuc") ?? "");
     if (p.get("sx") === "moi") setSort("recent");
     setNow(Date.now());
@@ -49,12 +46,11 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
     if (now === null) return;
     const p = new URLSearchParams();
     if (query) p.set("q", query);
-    if (kind !== "all") p.set("loai", kind);
     if (category) p.set("thumuc", category);
     if (sort === "recent") p.set("sx", "moi");
     const qs = p.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [query, kind, category, sort, now]);
+  }, [query, category, sort, now]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -71,18 +67,14 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
   const indexed = useMemo<Indexed[]>(
     () =>
       songs.map((song) => {
-        const kinds = new Map<TabKind, number>();
-        for (const f of song.files) kinds.set(f.kind, (kinds.get(f.kind) ?? 0) + 1);
+        const labels = sheetLabels(song);
         return {
           song,
           title: fold(song.title),
           hay: fold([song.title, song.artist ?? "", song.category.join(" ")].join(" ")),
-          files: song.files.map((file) => {
-            const label = fileLabel(file, song.title);
-            return { file, label, hay: fold(file.name) };
-          }),
+          files: song.files.map((file) => ({ file, label: labels.get(file.id)!, hay: fold(file.name) })),
           modified: song.modifiedTime ? Date.parse(song.modifiedTime) : 0,
-          kinds,
+          parts: [...labels.values()].filter((l) => !l.startsWith("Tab/Sheet")),
         };
       }),
     [songs],
@@ -99,18 +91,11 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
     return [...counts].sort(([a], [b]) => categoryRank(a) - categoryRank(b) || collator.compare(a, b));
   }, [indexed, scoped]);
 
-  const kindCounts = useMemo(() => {
-    const counts = new Map<TabKind, number>();
-    for (const i of indexed) for (const k of i.kinds.keys()) counts.set(k, (counts.get(k) ?? 0) + 1);
-    return counts;
-  }, [indexed]);
-
   const results = useMemo(() => {
     const q = fold(query.trim());
     const tokens = q.split(/\s+/).filter(Boolean);
     const out: { i: Indexed; score: number; matchedFile: Indexed["files"][number] | null }[] = [];
     for (const i of indexed) {
-      if (kind !== "all" && !i.kinds.has(kind)) continue;
       if (category && i.song.category[0] !== category) continue;
       let matchedFile: Indexed["files"][number] | null = null;
       let score = 0;
@@ -132,9 +117,9 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
         collator.compare(a.i.song.title, b.i.song.title),
     );
     return out;
-  }, [indexed, query, kind, category, sort]);
+  }, [indexed, query, category, sort]);
 
-  const filtered = query.trim() !== "" || kind !== "all" || category !== "";
+  const filtered = query.trim() !== "" || category !== "";
   const newCutoff = now === null ? Infinity : now - NEW_DAYS * 86_400_000;
 
   return (
@@ -190,17 +175,6 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
             ))}
           </div>
         )}
-
-        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-          <Chip active={kind === "all"} onClick={() => setKind("all")}>
-            {categories.length > 0 ? "Mọi loại file" : "Tất cả"}
-          </Chip>
-          {KIND_ORDER.filter((k) => kindCounts.has(k)).map((k) => (
-            <Chip key={k} active={kind === k} onClick={() => setKind(kind === k ? "all" : k)}>
-              {KIND_LABELS[k]} <span className="opacity-60">{kindCounts.get(k)}</span>
-            </Chip>
-          ))}
-        </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2 text-sm">
@@ -227,7 +201,6 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
                 type="button"
                 onClick={() => {
                   setQuery("");
-                  setKind("all");
                   setCategory("");
                 }}
                 className="font-medium text-accent underline underline-offset-4"
@@ -297,27 +270,16 @@ function SongCard({ i, matchedFile, newCutoff, inColumn }: Result & { newCutoff:
         </div>
         {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
         {matchedFile && <div className="-mt-1 truncate text-sm text-brass">↳ {matchedFile.label}</div>}
-        <div className="mt-auto flex flex-wrap gap-1">
-          {KIND_ORDER.filter((k) => i.kinds.has(k)).map((k) => (
-            <KindBadge key={k} kind={k} count={i.kinds.get(k)} />
-          ))}
-        </div>
+        {i.parts.length > 0 && (
+          <div className="mt-auto flex flex-wrap gap-1">
+            {i.parts.map((p) => (
+              <span key={p} className="rounded-sm bg-surface-2 px-1.5 py-0.5 text-xs text-muted">
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
       </Link>
     </li>
-  );
-}
-
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={`h-9 shrink-0 whitespace-nowrap rounded-md border px-3.5 text-sm font-medium transition-colors ${
-        active ? "border-accent bg-accent text-accent-fg" : "border-border bg-surface hover:border-brass"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

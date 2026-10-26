@@ -1,8 +1,8 @@
 import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 import { driveAccessToken, serviceAccount } from "./google";
-import { GOOGLE_DOC_MIME, KIND_ORDER, detectKind, parseTitle, splitExt } from "./kinds";
-import type { Song, TabFile } from "./types";
+import { GOOGLE_DOC_MIME, KIND_ORDER, detectKind, detectLinkKind, fold, parseTitle, partName, splitExt } from "./kinds";
+import type { LinkKind, Song, TabFile } from "./types";
 
 /** How often (seconds) the site re-reads the Drive folder. */
 export const REVALIDATE_SECONDS = 300;
@@ -29,9 +29,9 @@ interface Entry {
   modifiedTime: string | null;
 }
 
-/** Walks a folder tree, keeping only sheet/tab files. */
+/** Walks a folder tree, keeping only sheet/tab files and link files (see detectLinkKind). */
 async function walkTree(rootId: string) {
-  const out: TabFile[] = [];
+  const out: (TabFile & { link?: LinkKind })[] = [];
   async function walk(folderId: string, folder: string[], parentId: string | null) {
     const entries = await driveChildren(folderId);
     await Promise.all(
@@ -42,9 +42,11 @@ async function walkTree(rootId: string) {
         }
         const isGoogleFile = e.mimeType.startsWith("application/vnd.google-apps.");
         const ext = isGoogleFile ? "" : splitExt(e.name)[1];
-        const kind = detectKind(ext, e.mimeType);
-        if (!kind) return; // backing tracks, video clips, other documents
+        const link = detectLinkKind(e.name, ext, e.mimeType);
+        const kind = link ? "text" : detectKind(ext, e.mimeType);
+        if (!kind) return; // audio, video clips, other documents
         out.push({
+          ...(link && { link }),
           id: e.id,
           name: e.name,
           folder,
@@ -116,27 +118,39 @@ async function driveChildren(folderId: string): Promise<Entry[]> {
 
 const collator = new Intl.Collator("vi", { sensitivity: "base", numeric: true });
 
-function groupSongs(files: TabFile[]): Song[] {
+/** Drops a picture when another file already covers the same part (it is usually a snapshot of that sheet). */
+function withoutDuplicatePictures(song: Song) {
+  const covered = new Set(song.files.filter((f) => f.kind !== "image").map((f) => fold(partName(f, song.title))));
+  song.files = song.files.filter((f) => f.kind !== "image" || !covered.has(fold(partName(f, song.title))));
+}
+
+function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
   const songs = new Map<string, Song>();
-  for (const f of files) {
+  for (const { link, ...f } of files) {
     const id = f.parentId ?? f.id;
     let song = songs.get(id);
     if (!song) {
       const own = parseTitle(f.ext ? splitExt(f.name)[0] : f.name);
       song = f.parentId
-        ? { id, ...parseTitle(f.folder[f.folder.length - 1]), category: f.folder.slice(0, -1), files: [], modifiedTime: null }
-        : { id, ...own, category: [], files: [], modifiedTime: null };
+        ? { id, ...parseTitle(f.folder[f.folder.length - 1]), category: f.folder.slice(0, -1), files: [], links: {}, modifiedTime: null }
+        : { id, ...own, category: [], files: [], links: {}, modifiedTime: null };
       songs.set(id, song);
+    }
+    if (link) {
+      song.links[link] ??= f;
+      continue;
     }
     song.files.push(f);
     if (f.modifiedTime && (!song.modifiedTime || f.modifiedTime > song.modifiedTime)) song.modifiedTime = f.modifiedTime;
   }
   for (const song of songs.values()) {
+    withoutDuplicatePictures(song);
     song.files.sort(
       (a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || collator.compare(a.name, b.name),
     );
   }
-  return [...songs.values()].sort((a, b) => collator.compare(a.title, b.title));
+  // A folder holding only link files has nothing to show.
+  return [...songs.values()].filter((s) => s.files.length > 0).sort((a, b) => collator.compare(a.title, b.title));
 }
 
 // ---------- Public API ----------
@@ -192,5 +206,21 @@ export async function getTabText(tab: TabFile): Promise<string> {
     } catch {
       return new TextDecoder("utf-8").decode(bytes);
     }
+  }
+}
+
+/**
+ * The link in a link file (video.txt, backing.txt, a .url shortcut…): its first http(s) address, or null.
+ * Cached like the folder listing, so a song page doesn't hit Drive on every view.
+ */
+export async function getLinkUrl(file: TabFile): Promise<string | null> {
+  try {
+    const res = await driveFetch(driveContentUrl(file), { cache: "force-cache", next: { revalidate: REVALIDATE_SECONDS, tags: ["tabs"] } });
+    if (!res.ok) return null;
+    const match = /https?:\/\/[^\s"'<>]+/i.exec(await res.text());
+    return match ? new URL(match[0]).toString() : null;
+  } catch (err) {
+    unstable_rethrow(err);
+    return null;
   }
 }
