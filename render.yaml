@@ -8,11 +8,15 @@ services:
     region: singapore
     branch: main
     buildCommand: npm ci && npm run typecheck && npm run build
-    # Runs Next directly rather than through npm, saving ~80 MB of the instance's memory.
-    startCommand: node node_modules/next/dist/bin/next start
+    # Runs Next directly rather than through npm, saving ~80 MB of the instance's memory. The JS heap is capped
+    # so Node collects garbage before the 512 MB instance runs out (sharp's image memory lives outside it).
+    startCommand: node --max-old-space-size=256 node_modules/next/dist/bin/next start
     envVars:
       - key: NODE_VERSION
         value: "22"
+      # Fewer glibc malloc arenas: sharp/libvips otherwise leave memory fragmented and RSS creeping up.
+      - key: MALLOC_ARENA_MAX
+        value: "2"
       - key: PAYMENT_PROVIDER
         value: manual
       - key: MAX_DEVICES

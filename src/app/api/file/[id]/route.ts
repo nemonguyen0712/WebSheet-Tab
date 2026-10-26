@@ -6,9 +6,24 @@ import type { TabFile } from "@/lib/types";
 import { recordFileView } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
 
+/**
+ * Stamping is the memory-hungry step (a long sheet image takes ~150 MB), so files are stamped one at a time:
+ * several viewers opening sheets together wait a moment instead of pushing the 512 MB server over its limit.
+ */
+let stampQueue: Promise<unknown> = Promise.resolve();
+function oneAtATime<T>(task: () => Promise<T>): Promise<T> {
+  const run = stampQueue.then(task, task);
+  stampQueue = run.catch(() => {});
+  return run;
+}
+
 /** The file as sent to the viewer: with their name stamped inside it. */
 async function stampedFile(tab: TabFile, stamp: Stamp): Promise<{ data: Uint8Array; type: string }> {
   const bytes = await getTabBytes(tab);
+  return tab.kind === "text" ? { data: bytes, type: "text/plain; charset=utf-8" } : oneAtATime(() => stampBytes(tab, bytes, stamp));
+}
+
+async function stampBytes(tab: TabFile, bytes: Uint8Array, stamp: Stamp): Promise<{ data: Uint8Array; type: string }> {
   switch (tab.kind) {
     case "pdf":
       return { data: await stampPdf(bytes, stamp), type: "application/pdf" };
