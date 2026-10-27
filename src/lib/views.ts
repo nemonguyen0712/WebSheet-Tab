@@ -5,6 +5,20 @@ import type { Viewer } from "./viewer";
 export const FILE_VIEW_LIMIT_PER_HOUR = Number(process.env.FILE_VIEW_LIMIT_PER_HOUR) || 60;
 
 /**
+ * How long views are kept. The hourly limit needs one hour and /admin's "most viewed" one day; a month
+ * leaves room to look into an account, while keeping the log from growing for ever (it's the one table
+ * that grows with every sheet opened).
+ */
+const VIEW_LOG_DAYS = 30;
+
+export async function purgeOldViews() {
+  if (!supabaseConfigured()) return;
+  const before = new Date(Date.now() - VIEW_LOG_DAYS * 86_400_000).toISOString();
+  const { error } = await createAdminClient().from("file_views").delete().lt("created_at", before);
+  if (error) console.error("purgeOldViews", error.message);
+}
+
+/**
  * Logs a full-file view and enforces the hourly limit. Returns false when the account is over it.
  * Admins are logged but never limited. If the log can't be read, viewing is allowed.
  */
