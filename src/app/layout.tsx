@@ -5,6 +5,7 @@ import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
+import { SiteNotice } from "@/components/SiteNotice";
 import { SITE_NAME, zalo } from "@/lib/site";
 import "./globals.css";
 
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="relative isolate flex min-h-dvh flex-col font-sans antialiased">
         <Ambient />
         <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/75 shadow-[0_1px_0_rgb(255_255_255/0.5)] backdrop-blur-md">
+          <SiteNotice />
           <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
             <Link href="/" className="flex min-w-0 items-center gap-2.5">
               <LogoMark className="size-9 shrink-0" />

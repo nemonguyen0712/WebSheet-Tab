@@ -124,7 +124,7 @@ export function SongBrowser({ songs, scoped = false }: { songs: Song[]; scoped?:
 
   return (
     <div>
-      <div className="sticky top-14 z-20 -mx-4 space-y-2.5 border-b border-border/70 bg-bg/80 px-4 pb-3 pt-3 backdrop-blur-md">
+      <div className="sticky top-[var(--header-h)] z-20 -mx-4 space-y-2.5 border-b border-border/70 bg-bg/80 px-4 pb-3 pt-3 backdrop-blur-md">
         <label className="relative block">
           <span className="sr-only">Tìm bài</span>
           <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

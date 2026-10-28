@@ -55,6 +55,36 @@ body {
   color: var(--fg);
 }
 
+/* Height of the sticky header: the 56px bar, plus the 28px announcement band (SiteNotice) when it is shown. */
+:root {
+  --header-h: 56px;
+}
+:root:has(.site-notice) {
+  --header-h: 84px;
+}
+
+/* Announcement band (components/SiteNotice.tsx): two copies of the text scroll by half the track, looping. */
+.notice-track {
+  display: flex;
+  width: max-content;
+  animation: notice-scroll 28s linear infinite;
+}
+.site-notice:hover .notice-track {
+  animation-play-state: paused;
+}
+@keyframes notice-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice-track {
+    animation: none;
+    width: auto;
+    padding-left: 1rem;
+  }
+}
+
 /* Ambient background (see components/Ambient.tsx). */
 .ambient-photo {
   background: url("/ambient.webp?v=9") center / cover no-repeat;
@@ -63,12 +93,15 @@ body {
 /*
  * Pushes a page's content below the OLIU wordmark of the fixed background photo (login page).
  * The photo (1672×941) covers the viewport, so it is max(100vw·941/1672, 100vh) tall and centred;
- * the wordmark ends at ~62% of its height; start at ~63% (above the "TAB & SHEET" line), minus the 56px header.
+ * the wordmark ends at ~62% of its height; start at ~63% (above the "TAB & SHEET" line), minus the header (--header-h).
  */
 .below-backdrop-logo {
   /* Below the "TAB & SHEET" line (ends at ~69% of the photo), but on short screens no lower than leaves
      room for the ~240px login panel above the bottom edge. */
-  padding-top: min(calc(50vh + 0.195 * max(56.28vw, 100vh) - 56px), calc(100dvh - 56px - 250px));
+  padding-top: min(
+    calc(50vh + 0.195 * max(56.28vw, 100vh) - var(--header-h)),
+    calc(100dvh - var(--header-h) - 250px)
+  );
 }
 
 /* Login: exactly one screen — no page scroll and no footer, so the photo and the panel stay put. */
