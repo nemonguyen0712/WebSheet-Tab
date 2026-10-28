@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
-import { folderIdFrom, forgetDriveFolders, listDriveFolders } from "@/lib/drive-folders";
+import { folderIdFrom, forgetDriveFolders, listDriveFolders, sectionFrom } from "@/lib/drive-folders";
 import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { checkDriveFolder, serviceAccountEmail } from "@/lib/source";
@@ -62,10 +62,11 @@ async function addFolder(formData: FormData) {
   await requireAdmin();
   const id = folderIdFrom(String(formData.get("folder") ?? ""));
   if (!id) redirect("/admin?thumuc=sai#drive");
-  const check = await checkDriveFolder(id);
+  const section = sectionFrom(formData.get("section"));
+  const check = await checkDriveFolder(id, section);
   if ("error" in check) redirect("/admin?thumuc=khongdoc#drive");
   const label = String(formData.get("label") ?? "").trim().slice(0, 60);
-  const { error } = await createAdminClient().from("drive_folders").upsert({ id, label });
+  const { error } = await createAdminClient().from("drive_folders").upsert({ id, label, section });
   forgetDriveFolders();
   redirect(error ? "/admin?thumuc=loi#drive" : `/admin?thumuc=ok&so=${check.songs}#drive`);
 }
@@ -77,6 +78,8 @@ async function removeFolder(formData: FormData) {
   forgetDriveFolders();
   redirect("/admin?thumuc=xoa#drive");
 }
+
+const SECTION_LABELS = { solo: "Chỉ Solo", melody: "Chỉ Melody" } as const;
 
 const FOLDER_MESSAGES: Record<string, string> = {
   ok: "Đã thêm thư mục. Bài trong đó lên web ngay (các máy chủ khác cập nhật trong khoảng 1 phút).",
@@ -126,7 +129,7 @@ export default async function AdminPage({
   ]);
   const revenue = (monthOrders ?? []).reduce((sum, o) => sum + o.amount, 0);
   const { folders, tableMissing } = await listDriveFolders();
-  const folderChecks = await Promise.all(folders.map((f) => checkDriveFolder(f.id)));
+  const folderChecks = await Promise.all(folders.map((f) => checkDriveFolder(f.id, f.section)));
   const saEmail = serviceAccountEmail();
 
   return (
@@ -175,8 +178,14 @@ export default async function AdminPage({
                   >
                     {f.id.slice(0, 10)}…
                   </a>
+                  <span className="ml-1 rounded bg-surface-2 px-1.5 py-0.5 text-xs text-muted">
+                    {f.section ? SECTION_LABELS[f.section] : "Tự nhận Solo / Melody"}
+                  </span>
                   <span className={`block text-xs ${"error" in check ? "text-[#b33a28]" : "text-muted"}`}>
-                    {"error" in check ? check.error : `${check.songs} bài`}
+                    {"error" in check
+                      ? check.error
+                      : `${check.songs} bài` +
+                        (check.sections.length ? ": " + check.sections.map(([name, n]) => `${name || "ngoài mục"} ${n}`).join(" · ") : "")}
                   </span>
                 </span>
                 {f.source === "admin" ? (
@@ -193,22 +202,44 @@ export default async function AdminPage({
             );
           })}
         </ul>
-        <form action={addFolder} className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input
-            name="folder"
-            required
-            placeholder="Link thư mục Drive (https://drive.google.com/drive/folders/…)"
-            className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-bg px-3 text-sm"
-            autoComplete="off"
-          />
-          <input
-            name="label"
-            placeholder="Tên gợi nhớ (vd: Drive của Nam)"
-            maxLength={60}
-            className="h-9 rounded-lg border border-border bg-bg px-3 text-sm sm:w-56"
-            autoComplete="off"
-          />
-          <button className="h-9 rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-deep">Thêm thư mục</button>
+        <form action={addFolder} className="mt-3 space-y-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              name="folder"
+              required
+              placeholder="Link thư mục Drive (https://drive.google.com/drive/folders/…)"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-bg px-3 text-sm"
+              autoComplete="off"
+            />
+            <input
+              name="label"
+              placeholder="Tên gợi nhớ (vd: Drive của Nam)"
+              maxLength={60}
+              className="h-9 rounded-lg border border-border bg-bg px-3 text-sm sm:w-56"
+              autoComplete="off"
+            />
+            <button className="h-9 rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-deep">Thêm thư mục</button>
+          </div>
+          <fieldset className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            <legend className="sr-only">Thư mục này chứa phần nào</legend>
+            <span className="text-muted">Thư mục này là:</span>
+            <label className="inline-flex items-center gap-1.5">
+              <input type="radio" name="section" value="" defaultChecked className="accent-[var(--accent)]" />
+              Cả hai: tự chia theo thư mục con có tên “Solo” / “Melody”
+            </label>
+            <label className="inline-flex items-center gap-1.5">
+              <input type="radio" name="section" value="solo" className="accent-[var(--accent)]" />
+              Chỉ Solo
+            </label>
+            <label className="inline-flex items-center gap-1.5">
+              <input type="radio" name="section" value="melody" className="accent-[var(--accent)]" />
+              Chỉ Melody
+            </label>
+          </fieldset>
+          <p className="text-xs text-muted">
+            “Chỉ Solo” / “Chỉ Melody”: mỗi thư mục con của thư mục này là một bài. “Cả hai”: thư mục con tên có chữ solo (vd “SOLO”, “Bài
+            solo”) vào Oliu Solo, có chữ melody / mel vào Oliu Melody, tên khác thành mục riêng.
+          </p>
         </form>
       </section>
 

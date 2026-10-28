@@ -1,6 +1,6 @@
 import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
-import { listDriveFolders } from "./drive-folders";
+import { type DriveFolder, type Section, listDriveFolders } from "./drive-folders";
 import { driveAccessToken, serviceAccount } from "./google";
 import { GOOGLE_DOC_MIME, KIND_ORDER, detectKind, detectLinkKind, fold, parseTitle, partName, splitExt } from "./kinds";
 import type { LinkKind, Song, TabFile } from "./types";
@@ -16,18 +16,38 @@ const MAX_DEPTH = 6;
  * The root Drive folders (see lib/drive-folders.ts: the environment's plus those added in /admin), each shared
  * with the service account, possibly owned by different people. Throws a readable error when there are none.
  */
-async function rootFolders(): Promise<string[]> {
+async function rootFolders(): Promise<DriveFolder[]> {
   const { folders } = await listDriveFolders();
   if (!folders.length || !serviceAccount()) {
     throw new Error("Chưa cấu hình Google Drive (thêm thư mục trong /admin, và GOOGLE_SERVICE_ACCOUNT_JSON).");
   }
-  return folders.map((f) => f.id);
+  return folders;
 }
 
-/** For /admin: how many songs one root folder holds, or why it can't be read. */
-export async function checkDriveFolder(id: string): Promise<{ songs: number } | { error: string }> {
+/**
+ * The site's two sections, under the names the original Drive folders use. Folders of other owners are
+ * filed under these whatever their own spelling ("Solo", "Bài solo", "Mel"…), so they share /solo and /melody.
+ */
+export const SECTION_NAME: Record<Section, string> = { solo: "SOLO", melody: "MELODY" };
+
+/** "SOLO", "Bài solo", "Solos" → solo; "Melody", "MEL", "giai điệu (melody)" → melody; anything else → null. */
+export function sectionOf(folderName: string): Section | null {
+  const f = fold(folderName);
+  if (/\bsolos?\b/.test(f)) return "solo";
+  if (/\bmel(ody|odies)?\b/.test(f)) return "melody";
+  return null;
+}
+
+/** For /admin: how many songs one root folder holds and in which sections, or why it can't be read. */
+export async function checkDriveFolder(
+  id: string,
+  section: Section | null,
+): Promise<{ songs: number; sections: [string, number][] } | { error: string }> {
   try {
-    return { songs: groupSongs(await walkTree(id)).length };
+    const songs = groupSongs(await walkTree(id, section));
+    const bySection = new Map<string, number>();
+    for (const s of songs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
+    return { songs: songs.length, sections: [...bySection] };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
@@ -48,15 +68,22 @@ interface Entry {
   modifiedTime: string | null;
 }
 
-/** Walks a folder tree, keeping only sheet/tab files and link files (see detectLinkKind). */
-async function walkTree(rootId: string) {
+/**
+ * Walks a folder tree, keeping only sheet/tab files and link files (see detectLinkKind). `section`: the whole
+ * root is that section, its subfolders being songs; null: the root's own subfolders are the sections, and
+ * those named after Solo / Melody are filed under SECTION_NAME.
+ */
+async function walkTree(rootId: string, section: Section | null = null) {
   const out: (TabFile & { link?: LinkKind })[] = [];
   async function walk(folderId: string, folder: string[], parentId: string | null) {
     const entries = await driveChildren(folderId);
     await Promise.all(
       entries.map(async (e) => {
         if (e.isFolder) {
-          if (folder.length < MAX_DEPTH) await walk(e.id, [...folder, e.name], e.id);
+          const atTop = !section && folder.length === 0;
+          const top = atTop ? sectionOf(e.name) : null;
+          const name = top ? SECTION_NAME[top] : e.name;
+          if (folder.length < MAX_DEPTH) await walk(e.id, [...folder, name], e.id);
           return;
         }
         const isGoogleFile = e.mimeType.startsWith("application/vnd.google-apps.");
@@ -79,7 +106,7 @@ async function walkTree(rootId: string) {
       }),
     );
   }
-  await walk(rootId, [], null);
+  await walk(rootId, section ? [SECTION_NAME[section]] : [], null);
   return out;
 }
 
@@ -182,7 +209,7 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
       const own = parseTitle(f.ext ? splitExt(f.name)[0] : f.name);
       song = f.parentId
         ? { id, ...parseTitle(f.folder[f.folder.length - 1]), category: f.folder.slice(0, -1), files: [], links: {}, modifiedTime: null }
-        : { id, ...own, category: [], files: [], links: {}, modifiedTime: null };
+        : { id, ...own, category: f.folder, files: [], links: {}, modifiedTime: null };
       songs.set(id, song);
     }
     if (link) {
@@ -209,9 +236,9 @@ export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string 
     // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
     // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
     const roots = await rootFolders();
-    const results = await Promise.allSettled(roots.map((id) => walkTree(id)));
+    const results = await Promise.allSettled(roots.map((r) => walkTree(r.id, r.section)));
     const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-    const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i], reason: r.reason }] : []));
+    const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i].id, reason: r.reason }] : []));
     for (const f of failed) unstable_rethrow(f.reason);
     if (failed.length === roots.length) throw failed[0].reason;
     for (const f of failed) console.error("Drive folder", f.id, f.reason);

@@ -1,5 +1,8 @@
 import { createAdminClient, supabaseConfigured } from "./supabase/server";
 
+/** What a root folder holds: one section ("solo" / "melody"), or null for both, told apart by its subfolders' names. */
+export type Section = "solo" | "melody";
+
 /**
  * The Drive folders songs are read from: DRIVE_FOLDER_ID in the server's environment (one or more, comma-separated)
  * plus the ones added in /admin (table drive_folders, supabase/migrations/004_drive_folders.sql).
@@ -9,6 +12,11 @@ export interface DriveFolder {
   label: string;
   /** "env": set on the server, edited there; "admin": added in /admin, removable there. */
   source: "env" | "admin";
+  section: Section | null;
+}
+
+export function sectionFrom(value: unknown): Section | null {
+  return value === "solo" || value === "melody" ? value : null;
 }
 
 /** A folder ID from its ID or any Drive folder URL; null if it doesn't look like one. */
@@ -23,7 +31,7 @@ function envFolders(): DriveFolder[] {
     .split(/[,;\s]+/)
     .map(folderIdFrom)
     .filter((id): id is string => Boolean(id))
-    .map((id) => ({ id, label: "", source: "env" as const }));
+    .map((id) => ({ id, label: "", source: "env" as const, section: null }));
 }
 
 /** Kept a minute per server process (or Worker isolate); /admin clears it on changes. */
@@ -39,9 +47,14 @@ export function listDriveFolders(): Promise<{ folders: DriveFolder[]; tableMissi
   const value = (async () => {
     const env = envFolders();
     if (!supabaseConfigured()) return { folders: env, tableMissing: false };
-    const { data, error } = await createAdminClient().from("drive_folders").select("id, label").order("created_at");
+    const { data, error } = await createAdminClient().from("drive_folders").select("id, label, section").order("created_at");
     // Before the migration is run the table doesn't exist: keep going with the environment's folders.
-    const added = (data ?? []).map((f) => ({ id: f.id as string, label: (f.label as string) ?? "", source: "admin" as const }));
+    const added = (data ?? []).map((f) => ({
+      id: f.id as string,
+      label: (f.label as string) ?? "",
+      source: "admin" as const,
+      section: sectionFrom(f.section),
+    }));
     const seen = new Set(env.map((f) => f.id));
     return { folders: [...env, ...added.filter((f) => !seen.has(f.id))], tableMissing: Boolean(error) };
   })();

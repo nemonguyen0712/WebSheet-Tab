@@ -118,6 +118,8 @@ grant execute on function public.file_view_stats(timestamptz) to service_role;
 create table if not exists public.drive_folders (
   id text primary key,
   label text not null default '',
+  -- 'solo' / 'melody': the whole folder is that section; null: its Solo / Melody subfolders tell them apart.
+  section text check (section in ('solo', 'melody')),
   created_at timestamptz not null default now()
 );
 alter table public.drive_folders enable row level security;
