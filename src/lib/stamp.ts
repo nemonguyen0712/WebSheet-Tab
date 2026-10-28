@@ -90,6 +90,8 @@ export async function stampImage(bytes: Uint8Array, stamp: Stamp, key: string): 
 
 /** Guitar Pro / MusicXML / alphaTex: name in the score's copyright line (drawn on the sheet), re-exported as Guitar Pro 7. */
 export async function stampNotation(bytes: Uint8Array, stamp: Stamp): Promise<Uint8Array> {
+  // Lite build (Workers Free plan): sent as uploaded, see next.config.ts.
+  if (process.env.OLIU_LITE === "1") return bytes;
   const alphaTab = await import("@coderline/alphatab");
   const settings = new alphaTab.Settings();
   const score = alphaTab.importer.ScoreLoader.loadScoreFromBytes(bytes, settings);

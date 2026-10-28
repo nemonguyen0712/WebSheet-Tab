@@ -8,6 +8,7 @@ import { ViewerError } from "./ViewerError";
 import { Watermark } from "./Watermark";
 
 const ZOOMS = [0.5, 0.67, 0.8, 1, 1.25, 1.5, 2, 3];
+const PDFJS = "/pdfjs/pdf.min.mjs";
 
 interface PageSize {
   width: number;
@@ -29,7 +30,9 @@ export function PdfViewer({ url, watermark }: { url: string; watermark?: string 
     let task: PDFDocumentLoadingTask | null = null;
     (async () => {
       try {
-        const pdfjs = await import("pdfjs-dist");
+        // Served from public/ (scripts/copy-assets.mjs) instead of bundled: the browser is the only place it
+        // runs, and a bundled copy would also land in the server build, eating into the Worker size limit.
+        const pdfjs: typeof import("pdfjs-dist") = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ PDFJS);
         pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
         task = pdfjs.getDocument({
           url,

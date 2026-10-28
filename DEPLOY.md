@@ -44,12 +44,13 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 
 Web chạy trên **Cloudflare Workers** qua bộ chuyển **OpenNext** (cấu hình: [`wrangler.jsonc`](wrangler.jsonc), [`open-next.config.ts`](open-next.config.ts)). Không ngủ, không có máy chủ riêng phải lo; mỗi lượt xem chạy ở trung tâm dữ liệu Cloudflare gần khách nhất.
 
-- **Bắt buộc gói Workers Paid (khoảng 5 USD/tháng).** Gói Free chỉ cho khoảng 10ms CPU mỗi lượt, không đủ để in tên vào PDF / ảnh / Guitar Pro. Gói Paid đã gồm 10 triệu request/tháng.
+- **Chạy thật nên dùng gói Workers Paid (khoảng 5 USD/tháng).** Gói Free chỉ cho khoảng 10ms CPU mỗi lượt và code tối đa 3MB (nén). In tên vào PDF / ảnh / Guitar Pro cần nhiều CPU hơn thế, nên ở gói Free sẽ có lúc báo lỗi 1102 (vượt giới hạn). Gói Paid đã gồm 10 triệu request/tháng.
+- **Thử trước bằng gói Free:** thêm build variable `OLIU_LITE` = `1` ở bước 2. Bản "lite" bỏ phần in tên vào file Guitar Pro (chữ mờ trên màn hình vẫn còn) để code còn khoảng 2,6MB, vừa gói Free. Khi lên gói Paid thì **xoá biến này** rồi deploy lại để có bản đầy đủ (khoảng 3MB).
 - **Ảnh sheet** (quét 600 dpi, rất nặng) được dịch vụ **Cloudflare Images** thu nhỏ còn 1600px rồi mới in tên; mỗi ảnh chỉ thu nhỏ 1 lần rồi được lưu lại. Gói miễn phí của Images có 5.000 lượt xử lý/tháng, dư dùng.
 
 ### 1. Tạo tài khoản và bật gói
 1. Đăng ký <https://dash.cloudflare.com>, **bật 2FA** (My Profile → Authentication).
-2. **Workers & Pages → Plans** → chọn **Workers Paid** → thanh toán bằng thẻ Visa/Mastercard (bật thanh toán quốc tế trên thẻ).
+2. **Workers & Pages → Plans** → chọn **Workers Paid** → thanh toán bằng thẻ Visa/Mastercard (bật thanh toán quốc tế trên thẻ). Chỉ thử thì bỏ qua bước này và dùng bản lite (xem trên).
 
 ### 2. Kết nối GitHub để tự deploy
 1. **Workers & Pages → Create → Import a repository** → kết nối GitHub → chọn repo **WebSheet-Tab**.
@@ -63,6 +64,7 @@ Web chạy trên **Cloudflare Workers** qua bộ chuyển **OpenNext** (cấu h�
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `NEXT_PUBLIC_ZALO`
+   - (chỉ khi thử bằng gói Free) `OLIU_LITE` = `1`
 4. Bấm **Deploy**. Lần đầu mất vài phút. Xong web có địa chỉ dạng `https://oliu.<tên-tài-khoản>.workers.dev`.
 
 ### 3. Nạp biến bí mật (Supabase, Google…)

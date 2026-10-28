@@ -18,6 +18,7 @@ function copy(from, to, filter) {
 }
 
 rmSync(pub("pdfjs"), { recursive: true, force: true });
+copy(nm("pdfjs-dist/build/pdf.min.mjs"), pub("pdfjs/pdf.min.mjs"));
 copy(nm("pdfjs-dist/build/pdf.worker.min.mjs"), pub("pdfjs/pdf.worker.min.mjs"));
 copy(nm("pdfjs-dist/cmaps"), pub("pdfjs/cmaps"));
 copy(nm("pdfjs-dist/standard_fonts"), pub("pdfjs/standard_fonts"));
