@@ -27,3 +27,5 @@ netlify.env
 
 # Secrets for Cloudflare (wrangler secret bulk)
 cloudflare-secrets.json
+.wrangler-dry/
+wrangler-dry.txt
