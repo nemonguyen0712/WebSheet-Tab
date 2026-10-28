@@ -42,7 +42,7 @@ Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp
 5. Mở thư mục Drive, bấm **Chia sẻ**, dán email của service account (dạng `...@....iam.gserviceaccount.com`), quyền **Người xem**.
    - **Quyền truy cập chung** để **Hạn chế** (không để "Bất kỳ ai có đường liên kết").
 6. Biến môi trường:
-   - `DRIVE_FOLDER_ID`: đoạn ID sau `/folders/` trong URL thư mục.
+   - `DRIVE_FOLDER_ID`: đoạn ID sau `/folders/` trong URL thư mục (dán cả link cũng được). **Nhiều thư mục** (vd của 2 chủ sở hữu khác nhau): cách nhau bằng dấu phẩy, bài của tất cả được gộp chung; mục cùng tên (Solo, Melody…) gộp làm một. Mỗi thư mục đều phải chia sẻ (Người xem) cho email tài khoản dịch vụ. Một thư mục lỗi (chưa chia sẻ…) thì web vẫn hiện bài của thư mục còn lại, lỗi chỉ hiện cho admin.
    - `GOOGLE_SERVICE_ACCOUNT_JSON`: toàn bộ nội dung file `.json`, dán thành một dòng.
 
 ### 2. Supabase: tài khoản + lưu gói đã mua

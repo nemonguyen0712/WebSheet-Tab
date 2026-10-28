@@ -11,13 +11,20 @@ const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 const MAX_DEPTH = 6;
 
-/** The root Drive folder; throws a readable error when the site isn't configured yet. */
-function rootFolder(): string {
-  const folder = process.env.DRIVE_FOLDER_ID?.trim();
-  if (!folder || !serviceAccount()) {
+/**
+ * The root Drive folders: DRIVE_FOLDER_ID holds one or more, separated by commas (folders owned by different
+ * people, each shared with the service account). A folder's ID or its whole URL both work. Throws a readable
+ * error when the site isn't configured yet.
+ */
+function rootFolders(): string[] {
+  const folders = (process.env.DRIVE_FOLDER_ID ?? "")
+    .split(/[,;\s]+/)
+    .map((s) => /\/folders\/([\w-]+)/.exec(s)?.[1] ?? s.replace(/["']/g, ""))
+    .filter(Boolean);
+  if (!folders.length || !serviceAccount()) {
     throw new Error("Chưa cấu hình Google Drive (DRIVE_FOLDER_ID và GOOGLE_SERVICE_ACCOUNT_JSON).");
   }
-  return folder;
+  return [...new Set(folders)];
 }
 
 interface Entry {
@@ -187,8 +194,19 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
 
 export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string | null }> => {
   try {
-    const files = await walkTree(rootFolder());
-    return { songs: groupSongs(files), error: null };
+    // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
+    // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
+    const roots = rootFolders();
+    const results = await Promise.allSettled(roots.map((id) => walkTree(id)));
+    const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+    const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i], reason: r.reason }] : []));
+    for (const f of failed) unstable_rethrow(f.reason);
+    if (failed.length === roots.length) throw failed[0].reason;
+    for (const f of failed) console.error("Drive folder", f.id, f.reason);
+    const error = failed.length
+      ? `Không đọc được ${failed.length}/${roots.length} thư mục Drive (chưa chia sẻ cho tài khoản dịch vụ?): ${failed.map((f) => f.id).join(", ")}`
+      : null;
+    return { songs: groupSongs(files), error };
   } catch (err) {
     unstable_rethrow(err); // let Next.js's own render signals through
     console.error(err);

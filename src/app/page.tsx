@@ -34,7 +34,8 @@ export default async function Home() {
           </Link>
         </section>
       )}
-      {error && (
+      {/* A partial failure (one of several Drive folders) is for the admin; visitors still get the other songs. */}
+      {error && (songs.length === 0 || viewer?.isAdmin) && (
         <div className="mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
           <p className="font-semibold">Không đọc được danh sách bài.</p>
           <p className="mt-1 break-words">{error}</p>
