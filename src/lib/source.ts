@@ -1,5 +1,6 @@
 import { unstable_rethrow } from "next/navigation";
 import { cache } from "react";
+import { listDriveFolders } from "./drive-folders";
 import { driveAccessToken, serviceAccount } from "./google";
 import { GOOGLE_DOC_MIME, KIND_ORDER, detectKind, detectLinkKind, fold, parseTitle, partName, splitExt } from "./kinds";
 import type { LinkKind, Song, TabFile } from "./types";
@@ -12,19 +13,30 @@ const FOLDER_MIME = "application/vnd.google-apps.folder";
 const MAX_DEPTH = 6;
 
 /**
- * The root Drive folders: DRIVE_FOLDER_ID holds one or more, separated by commas (folders owned by different
- * people, each shared with the service account). A folder's ID or its whole URL both work. Throws a readable
- * error when the site isn't configured yet.
+ * The root Drive folders (see lib/drive-folders.ts: the environment's plus those added in /admin), each shared
+ * with the service account, possibly owned by different people. Throws a readable error when there are none.
  */
-function rootFolders(): string[] {
-  const folders = (process.env.DRIVE_FOLDER_ID ?? "")
-    .split(/[,;\s]+/)
-    .map((s) => /\/folders\/([\w-]+)/.exec(s)?.[1] ?? s.replace(/["']/g, ""))
-    .filter(Boolean);
+async function rootFolders(): Promise<string[]> {
+  const { folders } = await listDriveFolders();
   if (!folders.length || !serviceAccount()) {
-    throw new Error("Chưa cấu hình Google Drive (DRIVE_FOLDER_ID và GOOGLE_SERVICE_ACCOUNT_JSON).");
+    throw new Error("Chưa cấu hình Google Drive (thêm thư mục trong /admin, và GOOGLE_SERVICE_ACCOUNT_JSON).");
   }
-  return [...new Set(folders)];
+  return folders.map((f) => f.id);
+}
+
+/** For /admin: how many songs one root folder holds, or why it can't be read. */
+export async function checkDriveFolder(id: string): Promise<{ songs: number } | { error: string }> {
+  try {
+    return { songs: groupSongs(await walkTree(id)).length };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
+  }
+}
+
+/** The email Drive folders must be shared with (Viewer). */
+export function serviceAccountEmail(): string | null {
+  return serviceAccount()?.client_email ?? null;
 }
 
 interface Entry {
@@ -196,7 +208,7 @@ export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string 
   try {
     // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
     // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
-    const roots = rootFolders();
+    const roots = await rootFolders();
     const results = await Promise.allSettled(roots.map((id) => walkTree(id)));
     const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
     const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i], reason: r.reason }] : []));

@@ -3,8 +3,10 @@ import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
+import { folderIdFrom, forgetDriveFolders, listDriveFolders } from "@/lib/drive-folders";
 import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
+import { checkDriveFolder, serviceAccountEmail } from "@/lib/source";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
@@ -54,12 +56,46 @@ const PASSWORD_MESSAGES: Record<string, string> = {
   loi: "Chưa đặt lại được mật khẩu.",
 };
 
-export default async function AdminPage({ searchParams }: { searchParams: Promise<{ q?: string; matkhau?: string }> }) {
+/** Adds a Drive folder (its link or ID) after checking the service account can read it. */
+async function addFolder(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const id = folderIdFrom(String(formData.get("folder") ?? ""));
+  if (!id) redirect("/admin?thumuc=sai#drive");
+  const check = await checkDriveFolder(id);
+  if ("error" in check) redirect("/admin?thumuc=khongdoc#drive");
+  const label = String(formData.get("label") ?? "").trim().slice(0, 60);
+  const { error } = await createAdminClient().from("drive_folders").upsert({ id, label });
+  forgetDriveFolders();
+  redirect(error ? "/admin?thumuc=loi#drive" : `/admin?thumuc=ok&so=${check.songs}#drive`);
+}
+
+async function removeFolder(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  await createAdminClient().from("drive_folders").delete().eq("id", String(formData.get("id")));
+  forgetDriveFolders();
+  redirect("/admin?thumuc=xoa#drive");
+}
+
+const FOLDER_MESSAGES: Record<string, string> = {
+  ok: "Đã thêm thư mục. Bài trong đó lên web ngay (các máy chủ khác cập nhật trong khoảng 1 phút).",
+  xoa: "Đã gỡ thư mục khỏi web. File trên Drive không bị đụng tới.",
+  sai: "Link không đúng: dán link thư mục Drive (có /folders/…) hoặc ID của thư mục.",
+  khongdoc: "Chưa đọc được thư mục: chủ thư mục cần chia sẻ (Người xem) cho email tài khoản dịch vụ ở trên, rồi thêm lại.",
+  loi: "Chưa lưu được. Đã chạy supabase/migrations/004_drive_folders.sql trong Supabase chưa?",
+};
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; matkhau?: string; thumuc?: string; so?: string }>;
+}) {
   await requireAdmin();
   if (!supabaseConfigured()) {
     return <main className="mx-auto max-w-5xl px-4 py-8 text-muted">Chưa cấu hình Supabase.</main>;
   }
-  const { q = "", matkhau } = await searchParams;
+  const { q = "", matkhau, thumuc, so } = await searchParams;
   const admin = createAdminClient();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -89,6 +125,9 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     admin.rpc("file_view_stats", { p_since: new Date(now.getTime() - 86_400_000).toISOString() }),
   ]);
   const revenue = (monthOrders ?? []).reduce((sum, o) => sum + o.amount, 0);
+  const { folders, tableMissing } = await listDriveFolders();
+  const folderChecks = await Promise.all(folders.map((f) => checkDriveFolder(f.id)));
+  const saEmail = serviceAccountEmail();
 
   return (
     <main className="allow-select mx-auto max-w-5xl space-y-6 px-4 py-8">
@@ -102,6 +141,76 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
         <Stat label="Doanh thu tháng này" value={formatVnd(revenue)} />
         <Stat label="Đơn đã thanh toán tháng này" value={String(monthOrders?.length ?? 0)} />
       </div>
+
+      <section id="drive" className="scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">Thư mục Google Drive</h2>
+        <p className="mt-1 text-sm text-muted">
+          Bài của mọi thư mục được gộp chung trên web; mục cùng tên (Solo, Melody…) gộp làm một. Thêm thư mục của người khác:
+          chủ thư mục chia sẻ thư mục (quyền <b>Người xem</b>) cho{" "}
+          <b className="font-mono text-fg">{saEmail ?? "(chưa cấu hình tài khoản dịch vụ)"}</b>, rồi dán link thư mục vào ô dưới.
+        </p>
+        {tableMissing && (
+          <p className="mt-3 rounded-lg bg-[#fbe7e4] px-3 py-2 text-sm text-[#8a2d22]">
+            Chưa tạo bảng lưu thư mục: mở Supabase → SQL Editor, chạy file <code>supabase/migrations/004_drive_folders.sql</code>.
+          </p>
+        )}
+        {thumuc && FOLDER_MESSAGES[thumuc] && (
+          <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm">
+            {FOLDER_MESSAGES[thumuc]}
+            {thumuc === "ok" && so ? ` Thư mục có ${so} bài.` : ""}
+          </p>
+        )}
+        <ul className="mt-3 divide-y divide-border text-sm">
+          {folders.map((f, i) => {
+            const check = folderChecks[i];
+            return (
+              <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="min-w-0">
+                  <span className="font-medium">{f.label || `Thư mục ${i + 1}`}</span>{" "}
+                  <a
+                    href={`https://drive.google.com/drive/folders/${f.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-xs text-muted underline-offset-2 hover:text-accent hover:underline"
+                  >
+                    {f.id.slice(0, 10)}…
+                  </a>
+                  <span className={`block text-xs ${"error" in check ? "text-[#b33a28]" : "text-muted"}`}>
+                    {"error" in check ? check.error : `${check.songs} bài`}
+                  </span>
+                </span>
+                {f.source === "admin" ? (
+                  <form action={removeFolder}>
+                    <input type="hidden" name="id" value={f.id} />
+                    <button className="h-8 rounded-md border border-border px-2 text-xs hover:border-[#b33a28] hover:text-[#b33a28]">
+                      Gỡ khỏi web
+                    </button>
+                  </form>
+                ) : (
+                  <span className="text-xs text-muted">Cấu hình trên máy chủ (DRIVE_FOLDER_ID)</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <form action={addFolder} className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            name="folder"
+            required
+            placeholder="Link thư mục Drive (https://drive.google.com/drive/folders/…)"
+            className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-bg px-3 text-sm"
+            autoComplete="off"
+          />
+          <input
+            name="label"
+            placeholder="Tên gợi nhớ (vd: Drive của Nam)"
+            maxLength={60}
+            className="h-9 rounded-lg border border-border bg-bg px-3 text-sm sm:w-56"
+            autoComplete="off"
+          />
+          <button className="h-9 rounded-lg bg-accent px-4 text-sm font-medium text-accent-fg hover:bg-deep">Thêm thư mục</button>
+        </form>
+      </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Xem nhiều nhất 24 giờ qua</h2>

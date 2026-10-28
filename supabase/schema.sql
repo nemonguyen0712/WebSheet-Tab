@@ -113,3 +113,11 @@ as $$
 $$;
 revoke all on function public.file_view_stats(timestamptz) from public, anon, authenticated;
 grant execute on function public.file_view_stats(timestamptz) to service_role;
+
+-- Google Drive folders added from /admin (besides DRIVE_FOLDER_ID in the server's environment).
+create table if not exists public.drive_folders (
+  id text primary key,
+  label text not null default '',
+  created_at timestamptz not null default now()
+);
+alter table public.drive_folders enable row level security;
