@@ -71,12 +71,13 @@ Web chỉ hiện các file: PDF, ảnh (jpg/png/webp…), Guitar Pro (`.gp` `.gp
 
 ### 4. Đưa web lên mạng
 
-Web chạy trên **Render**, cấu hình sẵn trong [`render.yaml`](render.yaml) (gói Free, tự ngủ sau ~15 phút không ai vào; gói Starter ~7 USD/tháng thì luôn thức). Các bước chi tiết ở [`DEPLOY.md`](DEPLOY.md) mục B.
+Web chạy trên **Cloudflare Workers** (qua OpenNext), cấu hình trong [`wrangler.jsonc`](wrangler.jsonc): không ngủ, mỗi ngày 3 giờ sáng tự chạy dọn dẹp (Cron Trigger trong [`worker.ts`](worker.ts)). Các bước chi tiết ở [`DEPLOY.md`](DEPLOY.md) mục B.
 
-1. Đẩy code lên GitHub.
-2. Render → **New → Blueprint** → chọn repo.
-3. Điền các biến bí mật Render hỏi (chạy `npm run deploy-env` để có sẵn file `deploy.env`), gồm cả `ADMIN_PHONES`: số điện thoại của bạn.
-4. Apply. Nếu dùng payOS/SePay, quay lại bước 3 để đặt webhook bằng địa chỉ web thật.
+- Deploy từ máy: `npx wrangler login` (1 lần), rồi build và deploy: `npm run deploy`. Đang ở gói Workers Free thì build bản lite: đặt `OLIU_LITE=1` trước lệnh (xem DEPLOY.md).
+- Biến bí mật: `npm run deploy-env` rồi `npx wrangler secret bulk cloudflare-secrets.json`, xong xoá file đó.
+- Nếu dùng payOS/SePay, đặt webhook bằng địa chỉ web thật.
+
+(Bản cũ trên Render vẫn còn cấu hình trong [`render.yaml`](render.yaml), DEPLOY.md mục B2.)
 
 (Vercel bản miễn phí **không cho dùng thương mại**; Netlify bản miễn phí giới hạn số lần deploy mỗi tháng.)
 

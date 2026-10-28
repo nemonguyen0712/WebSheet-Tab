@@ -2,7 +2,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "oliu",
-  "main": ".open-next/worker.js",
+  "main": "worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
@@ -19,6 +19,10 @@
   // Cloudflare Images: scales the 600 dpi sheet pictures down before the name is stamped (src/lib/stamp.ts).
   "images": {
     "binding": "IMAGES"
+  },
+  // Daily at 03:00 Vietnam time (20:00 UTC): the maintenance run in worker.ts.
+  "triggers": {
+    "crons": ["0 20 * * *"]
   },
   "observability": {
     "enabled": true

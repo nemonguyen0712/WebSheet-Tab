@@ -87,7 +87,7 @@ Như mục "Kiểm tra sau khi deploy" bên dưới, trên địa chỉ `workers
 ### 5. Tên miền riêng và chuyển hẳn sang Cloudflare
 1. Mua tên miền trên Cloudflare (**Domain Registration → Register Domains**), hoặc chuyển DNS của tên miền đã có về Cloudflare.
 2. Worker **oliu → Settings → Domains & Routes → Add → Custom domain** → nhập tên miền.
-3. cron-job.org: đổi URL cronjob hằng ngày sang `https://<tên-miền>/api/health?db=1`. Cronjob 10 phút giữ web thức **không cần nữa** (Workers không ngủ), có thể xoá.
+3. cron-job.org **không cần nữa**: Workers không ngủ, và việc dọn dẹp hằng ngày (`/api/health?db=1`) đã chạy bằng **Cron Trigger** của Cloudflare lúc 3 giờ sáng (xem `worker.ts`, `wrangler.jsonc`). Vào cron-job.org xoá (hoặc tắt) cả 2 cronjob.
 4. Nếu dùng SePay: đổi URL webhook sang `https://<tên-miền>/api/payments/sepay`.
 5. Báo khách địa chỉ mới, rồi tắt Render (Render → service **oliu** → Settings → **Suspend** hoặc **Delete**).
 
