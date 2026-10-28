@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { supabaseConfigured } from "@/lib/supabase/server";
 import { MAX_DEVICES, getViewer } from "@/lib/viewer";
+import { zalo } from "@/lib/site";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = { title: "Đăng nhập" };
@@ -31,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         )}
         <div>
           {supabaseConfigured() ? (
-            <LoginForm next={safePath(next)} initialMode={moi ? "signup" : "login"} />
+            <LoginForm next={safePath(next)} initialMode={moi ? "signup" : "login"} zaloUrl={zalo().url} />
           ) : (
             <p className="text-sm text-muted">
               Chưa cấu hình Supabase (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY).

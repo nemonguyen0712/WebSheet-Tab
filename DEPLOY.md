@@ -63,9 +63,10 @@ Web chạy trên **Cloudflare Workers** qua bộ chuyển **OpenNext** (cấu h�
    - `NODE_VERSION` = `22`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_ZALO`
    - (chỉ khi thử bằng gói Free) `OLIU_LITE` = `1`
 4. Bấm **Deploy**. Lần đầu mất vài phút. Xong web có địa chỉ dạng `https://oliu.<tên-tài-khoản>.workers.dev`.
+
+**Số Zalo hỗ trợ** (đầu trang, chân trang, nút quên mật khẩu) mặc định là `0908928517` (trong `src/lib/site.ts`). Muốn đổi mà không sửa code: thêm biến **`ZALO_PHONE`** cho Worker (**oliu → Settings → Variables and Secrets**), có hiệu lực ngay, không cần build lại.
 
 ### 3. Nạp biến bí mật (Supabase, Google…)
 Trên máy, trong thư mục dự án:

@@ -5,7 +5,7 @@ import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
-import { SITE_NAME, ZALO_DISPLAY, ZALO_URL } from "@/lib/site";
+import { SITE_NAME, zalo } from "@/lib/site";
 import "./globals.css";
 
 const beVietnam = Be_Vietnam_Pro({
@@ -38,6 +38,7 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const support = zalo();
   return (
     <html lang="vi" className={`${beVietnam.variable} ${bitter.variable} ${jetbrains.variable}`}>
       <body className="relative isolate flex min-h-dvh flex-col font-sans antialiased">
@@ -50,17 +51,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             {/* Zalo support (used to sit in a separate strip above the header). */}
             <a
-              href={ZALO_URL}
+              href={support.url}
               target="_blank"
               rel="noreferrer"
               className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-[13px] font-medium text-[#0068ff] hover:bg-surface/70 sm:text-sm"
-              title={`Hỗ trợ qua Zalo: ${ZALO_DISPLAY}`}
+              title={`Hỗ trợ qua Zalo: ${support.display}`}
             >
               <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" strokeLinejoin="round" />
               </svg>
               <span className="sm:hidden">Zalo</span>
-              <span className="hidden sm:inline">Hỗ trợ Zalo: {ZALO_DISPLAY}</span>
+              <span className="hidden sm:inline">Hỗ trợ Zalo: {support.display}</span>
             </a>
             <AccountNav />
           </div>
@@ -73,8 +74,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="font-display text-base font-bold text-[#f5f1e6]">{SITE_NAME}</span>
             </div>
             <p>Kho sheet guitar solo, melody — cập nhật liên tục.</p>
-            <a href={ZALO_URL} target="_blank" rel="noreferrer" className="font-medium text-[#e9d2a8] underline underline-offset-4">
-              Hỗ trợ: nhắn Zalo {ZALO_DISPLAY}
+            <a href={support.url} target="_blank" rel="noreferrer" className="font-medium text-[#e9d2a8] underline underline-offset-4">
+              Hỗ trợ: nhắn Zalo {support.display}
             </a>
           </div>
         </footer>

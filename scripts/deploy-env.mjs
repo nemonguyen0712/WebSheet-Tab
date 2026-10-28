@@ -35,7 +35,7 @@ const out = {
         ...(provider === "sepay" && { SEPAY_API_KEY: env.SEPAY_API_KEY }),
       }),
   ADMIN_PHONES: env.ADMIN_PHONES,
-  NEXT_PUBLIC_ZALO: env.NEXT_PUBLIC_ZALO,
+  ZALO_PHONE: env.ZALO_PHONE,
   NEXT_PUBLIC_SITE_URL: env.NEXT_PUBLIC_SITE_URL,
   MAX_DEVICES: env.MAX_DEVICES || "1",
 };

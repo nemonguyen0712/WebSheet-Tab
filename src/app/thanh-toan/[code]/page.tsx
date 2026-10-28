@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ORDER_TTL_MINUTES, bankAccount, bankQrUrl, bankTransferNote, getOrder, isExpired, orderExpiresAt, refreshOrder } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
-import { ZALO_URL } from "@/lib/site";
+import { zalo } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
 import { ExpiryCountdown, OrderPoller } from "./OrderPoller";
 
@@ -74,7 +74,7 @@ export default async function PaymentPage({
                 Tạo đơn mới
               </Link>
               <a
-                href={ZALO_URL}
+                href={zalo().url}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-11 items-center rounded-xl border border-border px-5 hover:border-accent"
@@ -121,7 +121,7 @@ export default async function PaymentPage({
                       Zalo cho mình, gói sẽ được kích hoạt sau khi mình kiểm tra tiền về.
                     </p>
                     <a
-                      href={ZALO_URL}
+                      href={zalo().url}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-4 inline-flex h-11 items-center rounded-xl bg-[#0068ff] px-5 font-medium text-white hover:opacity-90"

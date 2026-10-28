@@ -4,7 +4,6 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MIN_PASSWORD, USERNAME_RULES, formatPhone, normalizeUsername } from "@/lib/account";
-import { ZALO_URL } from "@/lib/site";
 import { checkPhone, createAccount, loginEmail } from "./actions";
 
 type Mode = "login" | "signup";
@@ -12,7 +11,8 @@ type Mode = "login" | "signup";
 const inputClass =
   "h-10 w-full rounded-xl border border-border bg-bg px-3 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
 
-export function LoginForm({ next, initialMode }: { next: string; initialMode: Mode }) {
+/** `zaloUrl`: support chat for forgotten passwords (from lib/site, read on the server). */
+export function LoginForm({ next, initialMode, zaloUrl }: { next: string; initialMode: Mode; zaloUrl: string }) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [identifier, setIdentifier] = useState("");
@@ -149,7 +149,7 @@ export function LoginForm({ next, initialMode }: { next: string; initialMode: Mo
           {submitButton("Đăng nhập")}
           <p className="text-center text-xs text-muted">
             Quên mật khẩu?{" "}
-            <a href={ZALO_URL} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
+            <a href={zaloUrl} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-4">
               Nhắn Zalo để được đặt lại
             </a>
           </p>
