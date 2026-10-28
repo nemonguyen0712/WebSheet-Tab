@@ -5,16 +5,14 @@ type PhotonImage = InstanceType<Photon["PhotonImage"]>;
  * Photon has a build per runtime, so each runtime imports its own by name. The package's bare import would
  * give Workers the Node build, which compiles WebAssembly at runtime, and Workers forbid that; their build
  * ships the .wasm as a module. The Node build embeds 2 MB of WebAssembly that would only push the Worker past
- * its size limit, so Next leaves its import alone and, with the .catch, the Cloudflare bundler skips it too.
+ * its size limit, so its name is read at runtime: neither Next nor the Cloudflare bundler can see (and embed) it.
  */
 let photon: Promise<Photon> | undefined;
 function loadPhoton(): Promise<Photon> {
   const onWorkers = typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
-  return (photon ??= onWorkers
-    ? import("@cf-wasm/photon/workerd")
-    : import(/* webpackIgnore: true */ /* turbopackIgnore: true */ "@cf-wasm/photon/node").catch((err) => {
-        throw err;
-      }));
+  if (onWorkers) return (photon ??= import("@cf-wasm/photon/workerd"));
+  const nodeBuild = process.env.PHOTON_NODE_BUILD || "@cf-wasm/photon/node";
+  return (photon ??= import(/* webpackIgnore: true */ /* turbopackIgnore: true */ nodeBuild) as Promise<Photon>);
 }
 
 /**
