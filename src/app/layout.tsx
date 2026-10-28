@@ -5,7 +5,7 @@ import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
-import { SiteNotice } from "@/components/SiteNotice";
+import { SiteNotice, SiteNoticeDialog } from "@/components/SiteNotice";
 import { SITE_NAME, zalo } from "@/lib/site";
 import "./globals.css";
 
@@ -82,6 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
         <ContentGuard />
+        <SiteNoticeDialog />
       </body>
     </html>
   );
