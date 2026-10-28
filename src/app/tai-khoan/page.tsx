@@ -60,6 +60,11 @@ export default async function AccountPage() {
           <Link href="/dang-ky" className="inline-flex h-10 items-center rounded-xl bg-accent px-4 text-sm font-medium text-accent-fg">
             {viewer.active ? "Gia hạn thêm" : "Đăng ký"}
           </Link>
+          {viewer.active && (
+            <Link href="/yeu-cau" className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm hover:border-accent">
+              Yêu cầu bài
+            </Link>
+          )}
           <form action="/auth/dang-xuat" method="post">
             <button type="submit" className="h-10 rounded-xl border border-border px-4 text-sm hover:border-accent">
               Đăng xuất

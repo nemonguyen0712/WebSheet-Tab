@@ -6,10 +6,11 @@ import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
 import { folderIdFrom, forgetDriveFolders, listDriveFolders, sectionFrom } from "@/lib/drive-folders";
 import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
+import { REQUEST_STATUS_LABEL, SONG_REQUESTS_PER_MONTH, type SongRequest, dayStartVN } from "@/lib/requests";
 import { checkDriveFolder, serviceAccountEmail } from "@/lib/source";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
-import { getViewer } from "@/lib/viewer";
+import { ONLINE_WINDOW_MS, getViewer } from "@/lib/viewer";
 
 export const metadata: Metadata = { title: "Quản trị" };
 
@@ -79,6 +80,20 @@ async function removeFolder(formData: FormData) {
   redirect("/admin?thumuc=xoa#drive");
 }
 
+/** A song request: done (the song is up) or rejected (with a reason; the customer gets the request back). */
+async function answerRequest(formData: FormData) {
+  "use server";
+  await requireAdmin();
+  const status = String(formData.get("status"));
+  if (status !== "done" && status !== "rejected") redirect("/admin#yeu-cau");
+  await createAdminClient()
+    .from("song_requests")
+    .update({ status, admin_note: String(formData.get("note") ?? "").trim().slice(0, 300), updated_at: new Date().toISOString() })
+    .eq("id", Number(formData.get("id")));
+  revalidatePath("/admin");
+  redirect("/admin#yeu-cau");
+}
+
 const SECTION_LABELS = { solo: "Chỉ Solo", melody: "Chỉ Melody" } as const;
 
 const FOLDER_MESSAGES: Record<string, string> = {
@@ -128,6 +143,22 @@ export default async function AdminPage({
     admin.rpc("file_view_stats", { p_since: new Date(now.getTime() - 86_400_000).toISOString() }),
   ]);
   const revenue = (monthOrders ?? []).reduce((sum, o) => sum + o.amount, 0);
+
+  // Traffic: accounts seen in the last few minutes / today (devices.last_seen), sheets opened in the last hour.
+  const requestFields = "id, title, section, detail, status, admin_note, created_at, profiles!inner(username, phone)";
+  const [{ count: onlineCount }, { count: todayCount }, { count: sheetsHour }, open, answered] = await Promise.all([
+    admin.from("devices").select("id", { count: "exact", head: true }).gte("last_seen", new Date(now.getTime() - ONLINE_WINDOW_MS).toISOString()),
+    admin.from("devices").select("id", { count: "exact", head: true }).gte("last_seen", dayStartVN()),
+    admin.from("file_views").select("id", { count: "exact", head: true }).gte("created_at", new Date(now.getTime() - 3_600_000).toISOString()),
+    // Waiting requests, oldest first; then the latest answered ones.
+    admin.from("song_requests").select(requestFields).eq("status", "pending").order("created_at").limit(50),
+    admin.from("song_requests").select(requestFields).neq("status", "pending").order("updated_at", { ascending: false }).limit(10),
+  ]);
+  type RequestRow = Omit<SongRequest, "user_id" | "updated_at"> & { profiles: { username: string; phone: string } };
+  const openRequests = (open.data ?? []) as unknown as RequestRow[];
+  const answeredRequests = (answered.data ?? []) as unknown as RequestRow[];
+  const requestsTableMissing = Boolean(open.error);
+
   const { folders, tableMissing } = await listDriveFolders();
   const folderChecks = await Promise.all(folders.map((f) => checkDriveFolder(f.id, f.section)));
   const saEmail = serviceAccountEmail();
@@ -144,6 +175,20 @@ export default async function AdminPage({
         <Stat label="Doanh thu tháng này" value={formatVnd(revenue)} />
         <Stat label="Đơn đã thanh toán tháng này" value={String(monthOrders?.length ?? 0)} />
       </div>
+
+      <section className="rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">Lưu lượng</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Stat label={`Đang online (${ONLINE_WINDOW_MS / 60_000} phút qua)`} value={String(onlineCount ?? 0)} />
+          <Stat label="Tài khoản vào web hôm nay" value={String(todayCount ?? 0)} />
+          <Stat label="Lượt mở sheet 1 giờ qua" value={String(sheetsHour ?? 0)} />
+        </div>
+        <p className="mt-3 text-xs text-muted">
+          Chỉ đếm tài khoản đã đăng nhập; khách chưa đăng nhập xem ở Cloudflare → Workers &amp; Pages → oliu → Metrics (tổng request,
+          lỗi). Lượt mở sheet là việc nặng nhất của máy chủ: nếu khi đông người mà Metrics báo lỗi (nhất là “Exceeded CPU”, mã 1102)
+          thì đã tới lúc lên gói Workers Paid.
+        </p>
+      </section>
 
       <section id="drive" className="scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Thư mục Google Drive</h2>
@@ -241,6 +286,77 @@ export default async function AdminPage({
             solo”) vào Oliu Solo, có chữ melody / mel vào Oliu Melody, tên khác thành mục riêng.
           </p>
         </form>
+      </section>
+
+      <section id="yeu-cau" className="scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">
+          Yêu cầu bài <span className="font-normal text-muted">({openRequests.length} đang chờ)</span>
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Khách có gói gửi tối đa {SONG_REQUESTS_PER_MONTH} yêu cầu mỗi tháng ở trang /yeu-cau. Up bài lên Drive rồi bấm “Đã xong”;
+          “Từ chối” thì khách được trả lại lượt (ghi lý do để khách biết).
+        </p>
+        {requestsTableMissing && (
+          <p className="mt-3 rounded-lg bg-[#fbe7e4] px-3 py-2 text-sm text-[#8a2d22]">
+            Chưa tạo bảng yêu cầu: mở Supabase → SQL Editor, chạy file <code>supabase/migrations/005_song_requests.sql</code>.
+          </p>
+        )}
+        {openRequests.length > 0 && (
+          <ul className="mt-3 divide-y divide-border text-sm">
+            {openRequests.map((r) => (
+              <li key={r.id} className="py-3">
+                <p>
+                  <span className="font-medium">{r.title}</span>
+                  {r.section && <span className="ml-1 text-xs text-muted">({r.section === "solo" ? "Solo" : "Melody"})</span>}
+                </p>
+                {r.detail && <p className="mt-0.5 whitespace-pre-line break-words text-muted">{r.detail}</p>}
+                <p className="mt-0.5 text-xs text-muted">
+                  {r.profiles.username} · {formatPhone(r.profiles.phone)} · {formatDateTime(r.created_at)}
+                </p>
+                <form action={answerRequest} className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <input type="hidden" name="id" value={r.id} />
+                  <input
+                    name="note"
+                    placeholder="Phản hồi cho khách (không bắt buộc; nên ghi lý do khi từ chối)"
+                    maxLength={300}
+                    className="h-8 min-w-0 flex-1 rounded-md border border-border bg-bg px-2 text-xs"
+                    autoComplete="off"
+                  />
+                  <span className="flex gap-2">
+                    <button name="status" value="done" className="h-8 rounded-md bg-accent px-3 text-xs font-medium text-accent-fg hover:bg-deep">
+                      Đã xong
+                    </button>
+                    <button
+                      name="status"
+                      value="rejected"
+                      className="h-8 rounded-md border border-border px-3 text-xs hover:border-[#b33a28] hover:text-[#b33a28]"
+                    >
+                      Từ chối
+                    </button>
+                  </span>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!requestsTableMissing && openRequests.length === 0 && <p className="mt-3 text-sm text-muted">Không có yêu cầu nào đang chờ.</p>}
+        {answeredRequests.length > 0 && (
+          <details className="mt-3 text-sm">
+            <summary className="cursor-pointer text-muted">Đã xử lý gần đây</summary>
+            <ul className="mt-2 divide-y divide-border">
+              {answeredRequests.map((r) => (
+                <li key={r.id} className="flex items-start justify-between gap-3 py-2">
+                  <span className="min-w-0">
+                    <span className="font-medium">{r.title}</span>{" "}
+                    <span className="text-xs text-muted">· {r.profiles.username}</span>
+                    {r.admin_note && <span className="block text-xs text-muted">{r.admin_note}</span>}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">{REQUEST_STATUS_LABEL[r.status]}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">

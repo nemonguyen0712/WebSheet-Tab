@@ -6,6 +6,12 @@ import { createAdminClient, createClient, supabaseConfigured } from "./supabase/
 export const DEVICE_COOKIE = "tab_device";
 /** How many devices one account may be signed in on at once. */
 export const MAX_DEVICES = Number(process.env.MAX_DEVICES) || 1;
+/**
+ * A device's last_seen is refreshed at most this often; /admin counts accounts seen within ONLINE_WINDOW_MS as online,
+ * so the window must be longer than the refresh interval.
+ */
+const ACTIVITY_EVERY_MS = 2 * 60_000;
+export const ONLINE_WINDOW_MS = 5 * 60_000;
 
 export interface Viewer {
   id: string;
@@ -74,8 +80,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       : Promise.resolve({ data: null }),
   ]);
 
-  // Record activity at most every 10 minutes.
-  if (device && Date.now() - Date.parse(device.last_seen) > 10 * 60_000) {
+  // Record activity at most every ACTIVITY_EVERY_MS (for the online count in /admin).
+  if (device && Date.now() - Date.parse(device.last_seen) > ACTIVITY_EVERY_MS) {
     await admin.from("devices").update({ last_seen: new Date().toISOString() }).eq("id", device.id);
   }
 

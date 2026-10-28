@@ -38,7 +38,12 @@ export default async function CategoryPage({ params }: Props) {
           Trang chủ
         </Link>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-deep sm:text-3xl">{categoryTitle(found.name)}</h1>
-        <p className="mt-0.5 text-sm text-muted">{found.songs.length} bài</p>
+        <p className="mt-0.5 flex flex-wrap items-center justify-between gap-x-3 text-sm text-muted">
+          <span>{found.songs.length} bài</span>
+          <Link href="/yeu-cau" className="text-accent underline-offset-4 hover:underline">
+            Chưa có bài bạn cần? Yêu cầu bài →
+          </Link>
+        </p>
       </div>
       {found.error && viewer?.isAdmin && (
         <div className="mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">{found.error}</div>

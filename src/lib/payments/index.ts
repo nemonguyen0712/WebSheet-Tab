@@ -175,16 +175,16 @@ export async function refreshOrder(order: Order): Promise<Order> {
 }
 
 /**
- * The bank account buyers pay into (manual and SePay modes): VietinBank 0908928517, Huỳnh Nhật Anh —
- * the same account as the owner's own VietinBank QR (bank BIN 970415). BANK_NAME / BANK_ACCOUNT_NUMBER /
+ * The bank account buyers pay into (manual and SePay modes): Techcombank 9908928517, Huỳnh Nhật Anh —
+ * the same account as the owner's own Techcombank QR (bank BIN 970407). BANK_NAME / BANK_ACCOUNT_NUMBER /
  * BANK_ACCOUNT_NAME override it.
  */
 export function bankAccount() {
   return {
-    bank: process.env.BANK_NAME || "VietinBank",
+    bank: process.env.BANK_NAME || "Techcombank",
     /** How VietQR identifies the bank: the BIN for the built-in account, else the short name (e.g. MBBank). */
-    qrBankId: process.env.BANK_NAME || "970415",
-    number: process.env.BANK_ACCOUNT_NUMBER || "0908928517",
+    qrBankId: process.env.BANK_NAME || "970407",
+    number: process.env.BANK_ACCOUNT_NUMBER || "9908928517",
     name: process.env.BANK_ACCOUNT_NAME || "HUYNH NHAT ANH",
   };
 }

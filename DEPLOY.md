@@ -133,28 +133,28 @@ Khi web trên Render chạy ổn: Netlify → site cũ → **Site configuration 
 
 ---
 
-## C. Thu tiền vào VietinBank
+## C. Thu tiền vào Techcombank
 
-Tiền vào thẳng tài khoản VietinBank. Trang thanh toán hiện mã VietQR **có sẵn số tiền và nội dung chuyển khoản**, khách chỉ cần quét rồi bấm chuyển.
-(payOS không liên kết được VietinBank. Nếu sau này đổi sang ngân hàng payOS hỗ trợ, xem README mục 3.)
+Tiền vào thẳng tài khoản Techcombank. Trang thanh toán hiện mã VietQR **có sẵn số tiền và nội dung chuyển khoản**, khách chỉ cần quét rồi bấm chuyển.
+(Muốn dùng payOS thì xem README mục 3.)
 
 ### Cách 1: chuyển khoản tay (mặc định, 0đ)
 
-Tiền vào tài khoản **VietinBank 0908928517 — HUYNH NHAT ANH** (đã cài sẵn trong code, muốn đổi tài khoản thì đặt `BANK_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`). Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
+Tiền vào tài khoản **Techcombank 9908928517 — HUYNH NHAT ANH** (đã cài sẵn trong code, muốn đổi tài khoản thì đặt `BANK_NAME`, `BANK_ACCOUNT_NUMBER`, `BANK_ACCOUNT_NAME`). Nội dung chuyển khoản cố định là **số điện thoại tài khoản của khách** (ví dụ `0901234567`).
 
 1. `PAYMENT_PROVIDER=manual` đã đặt sẵn trong `render.yaml` (mặc định cũng là `manual`), không cần làm gì. (Nút nhắn Zalo dùng số hỗ trợ `0908928517` có sẵn.)
-2. Khi khách nhắn đã chuyển: mở app VietinBank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
+2. Khi khách nhắn đã chuyển: mở app Techcombank, xem khoản **20.000đ**, nội dung là số điện thoại nào, chuyển lúc mấy giờ → vào `/admin`, gõ số điện thoại đó vào ô tìm kiếm (lọc luôn cả bảng đơn) → **Đơn gần đây**, đối chiếu cột **Thời gian** (giờ tạo đơn phải trước giờ tiền về) → bấm **Đã nhận tiền**. Gói được cộng 30 ngày ngay, trang thanh toán của khách tự báo thành công, doanh thu được tính.
    - Mã QR của mỗi đơn chỉ dùng được **10 phút**. Quá 10 phút đơn biến mất với khách (khách bấm tạo đơn mới), còn trong `/admin` đơn hiện nhãn **Hết hạn** nhưng vẫn bấm **Đã nhận tiền** được trong 24 giờ, phòng khi khách chuyển sát giờ. Sau 24 giờ đơn chưa trả tự bị xoá khỏi database.
 3. **Mua thử gói 20.000đ** bằng một tài khoản khách:
-   - [ ] Mã QR hiện đúng VietinBank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
+   - [ ] Mã QR hiện đúng Techcombank, số tài khoản, 20.000đ, nội dung là số điện thoại của tài khoản khách.
    - [ ] Bấm **Đã nhận tiền** trong `/admin`, trang thanh toán của khách tự chuyển sang "Thanh toán thành công".
    - [ ] Trang Tài khoản hiện hạn dùng thêm 30 ngày, `/admin` thấy doanh thu tăng.
 
 ### Cách 2: SePay tự kích hoạt (khi đơn nhiều, không muốn bấm tay)
 
-SePay theo dõi tài khoản VietinBank và báo về web khi có khoản chuyển đúng nội dung. Gói FREE có 50 giao dịch/tháng, vượt thì tính phí theo giao dịch (xem <https://sepay.vn/bang-gia.html>).
+SePay theo dõi tài khoản Techcombank và báo về web khi có khoản chuyển đúng nội dung. Gói FREE có 50 giao dịch/tháng, vượt thì tính phí theo giao dịch (xem <https://sepay.vn/bang-gia.html>).
 
-1. Đăng ký <https://my.sepay.vn> → **Ngân hàng → Kết nối tài khoản → tab Cá nhân → VietinBank**. Nhập số tài khoản, tên chủ tài khoản, CCCD và số điện thoại đăng ký với ngân hàng.
+1. Đăng ký <https://my.sepay.vn> → **Ngân hàng → Kết nối tài khoản → tab Cá nhân → Techcombank**. Nhập số tài khoản, tên chủ tài khoản, CCCD và số điện thoại đăng ký với ngân hàng.
 2. **Webhooks → Thêm webhook**:
    - URL: `https://<site của bạn>/api/payments/sepay`
    - Sự kiện: **Tiền vào**
@@ -180,6 +180,8 @@ Nên bật thêm:
 ## D. Vận hành hằng ngày
 
 - **Thêm bài:** tạo thư mục bài trong `Solo/` hoặc `Melody/` trên Drive, bỏ PDF / `.gp` / ảnh vào. Đặt tên file theo phần (`INTRO …`, `SOLO …`) để nút trên web ghi đúng tên phần. Có video hướng dẫn / backing track trên YouTube thì thêm file `video.txt` / `backing.txt` chứa link (xem README, mục "Cách xếp file trên Drive"). Khoảng 5 phút sau bài lên web, ở trang **Oliu Solo** (`/solo`) hoặc **Oliu Melody** (`/melody`). Mỗi thư mục cấp 1 trên Drive là một mục như vậy trên trang chủ.
+- **Yêu cầu bài:** khách có gói gửi ở trang `/yeu-cau` (2 lượt/tháng, đổi bằng biến `SONG_REQUESTS_PER_MONTH`). Trong `/admin` → **Yêu cầu bài**: up bài lên Drive rồi bấm **Đã xong**, hoặc **Từ chối** kèm lý do (khách được trả lại lượt). Cần chạy `supabase/migrations/005_song_requests.sql` một lần.
+- **Lưu lượng:** `/admin` → **Lưu lượng** cho biết số tài khoản online, vào web hôm nay, lượt mở sheet 1 giờ qua. Tổng request và lỗi (kể cả khách chưa đăng nhập) xem ở Cloudflare → Workers & Pages → **oliu** → **Metrics**; lỗi "Exceeded CPU" (1102) khi đông người nghĩa là nên lên Workers Paid.
 - **Khách quên mật khẩu:** khách nhắn Zalo → `/admin` → tìm khách → nhập mật khẩu mới → **Đặt lại MK** → gửi mật khẩu cho khách và nhắc họ đổi lại.
 - **Khách chuyển khoản tay hoặc bạn muốn tặng ngày:** `/admin` → **+30 ngày**.
 - **File lớn:** PDF/ảnh vài chục MB vẫn mở được nhưng chậm và tốn RAM của máy chủ (gói Free chỉ 512MB), nên nén bớt trước khi up.
