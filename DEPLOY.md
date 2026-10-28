@@ -40,7 +40,60 @@ Làm lần lượt từ trên xuống. Tick `[x]` khi xong.
 
 ---
 
-## B. Deploy lên Render
+## B. Deploy lên Cloudflare Workers
+
+Web chạy trên **Cloudflare Workers** qua bộ chuyển **OpenNext** (cấu hình: [`wrangler.jsonc`](wrangler.jsonc), [`open-next.config.ts`](open-next.config.ts)). Không ngủ, không có máy chủ riêng phải lo; mỗi lượt xem chạy ở trung tâm dữ liệu Cloudflare gần khách nhất.
+
+- **Bắt buộc gói Workers Paid (khoảng 5 USD/tháng).** Gói Free chỉ cho khoảng 10ms CPU mỗi lượt, không đủ để in tên vào PDF / ảnh / Guitar Pro. Gói Paid đã gồm 10 triệu request/tháng.
+- **Ảnh sheet** (quét 600 dpi, rất nặng) được dịch vụ **Cloudflare Images** thu nhỏ còn 1600px rồi mới in tên; mỗi ảnh chỉ thu nhỏ 1 lần rồi được lưu lại. Gói miễn phí của Images có 5.000 lượt xử lý/tháng, dư dùng.
+
+### 1. Tạo tài khoản và bật gói
+1. Đăng ký <https://dash.cloudflare.com>, **bật 2FA** (My Profile → Authentication).
+2. **Workers & Pages → Plans** → chọn **Workers Paid** → thanh toán bằng thẻ Visa/Mastercard (bật thanh toán quốc tế trên thẻ).
+
+### 2. Kết nối GitHub để tự deploy
+1. **Workers & Pages → Create → Import a repository** → kết nối GitHub → chọn repo **WebSheet-Tab**.
+2. Điền:
+   - **Project name:** `oliu` (phải trùng `name` trong `wrangler.jsonc`)
+   - **Branch:** `main`
+   - **Build command:** `npx opennextjs-cloudflare build`
+   - **Deploy command:** `npx opennextjs-cloudflare deploy`
+3. Mở **Advanced settings → Build variables**, thêm (lấy giá trị trong `.env.local`):
+   - `NODE_VERSION` = `22`
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_ZALO`
+4. Bấm **Deploy**. Lần đầu mất vài phút. Xong web có địa chỉ dạng `https://oliu.<tên-tài-khoản>.workers.dev`.
+
+### 3. Nạp biến bí mật (Supabase, Google…)
+Trên máy, trong thư mục dự án:
+```bash
+npm run deploy-env
+```
+```bash
+npx wrangler login
+```
+```bash
+npx wrangler secret bulk cloudflare-secrets.json
+```
+Lệnh đầu tạo `cloudflare-secrets.json` (đã gitignore) từ `.env.local`; lệnh thứ hai mở trình duyệt để đăng nhập Cloudflare; lệnh cuối nạp toàn bộ biến vào Worker **oliu**. Xong thì **xoá `cloudflare-secrets.json`** và `deploy.env`.
+(Hoặc nhập tay: Worker **oliu → Settings → Variables and Secrets → Add**, chọn loại **Secret**.)
+
+### 4. Kiểm tra
+Như mục "Kiểm tra sau khi deploy" bên dưới, trên địa chỉ `workers.dev`. Lỗi thì xem Worker **oliu → Logs** (đã bật sẵn), copy gửi Claude.
+
+### 5. Tên miền riêng và chuyển hẳn sang Cloudflare
+1. Mua tên miền trên Cloudflare (**Domain Registration → Register Domains**), hoặc chuyển DNS của tên miền đã có về Cloudflare.
+2. Worker **oliu → Settings → Domains & Routes → Add → Custom domain** → nhập tên miền.
+3. cron-job.org: đổi URL cronjob hằng ngày sang `https://<tên-miền>/api/health?db=1`. Cronjob 10 phút giữ web thức **không cần nữa** (Workers không ngủ), có thể xoá.
+4. Nếu dùng SePay: đổi URL webhook sang `https://<tên-miền>/api/payments/sepay`.
+5. Báo khách địa chỉ mới, rồi tắt Render (Render → service **oliu** → Settings → **Suspend** hoặc **Delete**).
+
+Chạy thử bản Cloudflare ngay trên máy (giống hệt môi trường Workers): tạo `.dev.vars` (cùng nội dung `.env.local`, đã gitignore) rồi `npm run preview`.
+
+---
+
+## B2. (Cũ) Deploy lên Render
 
 Web chạy trên **Render** (<https://render.com>), cấu hình sẵn trong [`render.yaml`](render.yaml): gói **Free**, máy chủ Singapore, tự deploy mỗi khi `main` có code mới.
 

@@ -1,0 +1,27 @@
+// Cloudflare Workers config for the site, built by OpenNext (see open-next.config.ts and DEPLOY.md).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "oliu",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference the OpenNext adapter needs; must match "name".
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "oliu"
+    }
+  ],
+  // Cloudflare Images: scales the 600 dpi sheet pictures down before the name is stamped (src/lib/stamp.ts).
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Secrets (Supabase, Google, …) are not here: set them in the dashboard or with `wrangler secret put`.
+}

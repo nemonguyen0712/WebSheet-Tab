@@ -1,5 +1,5 @@
-// Builds deploy.env from .env.local, to paste into Render → the service → Environment →
-// "Add from .env". The Google key is trimmed to the two fields the site uses.
+// Builds, from .env.local, deploy.env (to paste into Render → Environment → "Add from .env") and
+// cloudflare-secrets.json (for `npx wrangler secret bulk`). The Google key is trimmed to the two fields used.
 import { readFileSync, writeFileSync } from "node:fs";
 
 const env = Object.fromEntries(
@@ -51,5 +51,9 @@ for (const [name, value] of Object.entries(out)) {
 }
 writeFileSync("deploy.env", lines.join("\n") + "\n");
 
-console.log(`deploy.env: ${lines.length} biến.`);
-if (missing.length) console.log(`Chưa có (điền sau trên Render): ${missing.join(", ")}`);
+// Cloudflare: `npx wrangler secret bulk cloudflare-secrets.json` uploads them all as the Worker's secrets.
+const secrets = Object.fromEntries(Object.entries(out).filter(([, value]) => value));
+writeFileSync("cloudflare-secrets.json", JSON.stringify(secrets, null, 2) + "\n");
+
+console.log(`deploy.env + cloudflare-secrets.json: ${lines.length} biến.`);
+if (missing.length) console.log(`Chưa có (điền sau): ${missing.join(", ")}`);

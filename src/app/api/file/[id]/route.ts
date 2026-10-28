@@ -7,8 +7,9 @@ import { recordFileView } from "@/lib/views";
 import { getViewer } from "@/lib/viewer";
 
 /**
- * Stamping is the memory-hungry step (a long sheet image takes ~150 MB), so files are stamped one at a time:
- * several viewers opening sheets together wait a moment instead of pushing the 512 MB server over its limit.
+ * Stamping is the memory-hungry step (~15 MB for a scaled-down sheet picture), so within one server process or
+ * Worker isolate (128 MB) files are stamped one at a time: viewers opening sheets together wait a moment
+ * instead of adding up.
  */
 let stampQueue: Promise<unknown> = Promise.resolve();
 function oneAtATime<T>(task: () => Promise<T>): Promise<T> {
@@ -28,7 +29,7 @@ async function stampBytes(tab: TabFile, bytes: Uint8Array, stamp: Stamp): Promis
     case "pdf":
       return { data: await stampPdf(bytes, stamp), type: "application/pdf" };
     case "image":
-      return stampImage(bytes, stamp);
+      return stampImage(bytes, stamp, `${tab.id}@${tab.modifiedTime ?? ""}`);
     case "notation":
       return { data: await stampNotation(bytes, stamp), type: "application/octet-stream" };
     default:

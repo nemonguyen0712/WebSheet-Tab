@@ -66,12 +66,30 @@ async function walkTree(rootId: string) {
 
 // ---------- Google Drive (private folder, read with a service account) ----------
 
-async function driveFetch(url: string, init: RequestInit & { next?: { revalidate?: number; tags?: string[] } } = {}) {
+async function driveFetch(url: string) {
   const token = await driveAccessToken();
-  return fetch(url, { ...init, headers: { ...init.headers, authorization: `Bearer ${token}` } });
+  return fetch(url, { cache: "no-store", headers: { authorization: `Bearer ${token}` } });
 }
 
-async function driveChildren(folderId: string): Promise<Entry[]> {
+/**
+ * Drive answers kept in memory for REVALIDATE_SECONDS, per server process (or Cloudflare Worker isolate).
+ * Plain memory rather than Next's fetch cache, which on Cloudflare would need an extra storage bucket.
+ */
+const memo = new Map<string, { expires: number; value: Promise<unknown> }>();
+function remember<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = memo.get(key);
+  if (hit && hit.expires > Date.now()) return hit.value as Promise<T>;
+  const value = load();
+  memo.set(key, { expires: Date.now() + REVALIDATE_SECONDS * 1000, value });
+  value.catch(() => memo.delete(key)); // don't keep a failure around
+  return value;
+}
+
+function driveChildren(folderId: string): Promise<Entry[]> {
+  return remember(`children:${folderId}`, () => loadChildren(folderId));
+}
+
+async function loadChildren(folderId: string): Promise<Entry[]> {
   const entries: Entry[] = [];
   let pageToken: string | undefined;
   do {
@@ -83,10 +101,7 @@ async function driveChildren(folderId: string): Promise<Entry[]> {
       includeItemsFromAllDrives: "true",
     });
     if (pageToken) params.set("pageToken", pageToken);
-    const res = await driveFetch(`${DRIVE_API}/files?${params}`, {
-      cache: "force-cache",
-      next: { revalidate: REVALIDATE_SECONDS, tags: ["tabs"] },
-    });
+    const res = await driveFetch(`${DRIVE_API}/files?${params}`);
     if (!res.ok) {
       const body = await res.text();
       let message = body;
@@ -203,7 +218,7 @@ function driveContentUrl(tab: TabFile) {
 
 /** Whole file contents. Sheet/tab files are small, so they're read into memory. */
 export async function getTabBytes(tab: TabFile): Promise<Uint8Array> {
-  const res = await driveFetch(driveContentUrl(tab), { cache: "no-store" });
+  const res = await driveFetch(driveContentUrl(tab));
   if (!res.ok) throw new Error(`Không tải được file từ Google Drive (${res.status})`);
   return new Uint8Array(await res.arrayBuffer());
 }
@@ -228,14 +243,15 @@ export async function getTabText(tab: TabFile): Promise<string> {
  * The link in a link file (video.txt, backing.txt, a .url shortcut…): its first http(s) address, or null.
  * Cached like the folder listing, so a song page doesn't hit Drive on every view.
  */
-export async function getLinkUrl(file: TabFile): Promise<string | null> {
-  try {
-    const res = await driveFetch(driveContentUrl(file), { cache: "force-cache", next: { revalidate: REVALIDATE_SECONDS, tags: ["tabs"] } });
-    if (!res.ok) return null;
-    const match = /https?:\/\/[^\s"'<>]+/i.exec(await res.text());
-    return match ? new URL(match[0]).toString() : null;
-  } catch (err) {
-    unstable_rethrow(err);
-    return null;
-  }
+export function getLinkUrl(file: TabFile): Promise<string | null> {
+  return remember(`link:${file.id}:${file.modifiedTime}`, async () => {
+    try {
+      const res = await driveFetch(driveContentUrl(file));
+      if (!res.ok) return null;
+      const match = /https?:\/\/[^\s"'<>]+/i.exec(await res.text());
+      return match ? new URL(match[0]).toString() : null;
+    } catch {
+      return null;
+    }
+  });
 }

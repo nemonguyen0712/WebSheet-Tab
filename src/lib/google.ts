@@ -1,5 +1,3 @@
-import { createSign } from "crypto";
-
 /**
  * Google service account auth for reading the private Drive folder.
  * GOOGLE_SERVICE_ACCOUNT_JSON holds the key file Google gives you (raw JSON or base64 of it).
@@ -25,8 +23,23 @@ export function serviceAccount(): ServiceAccount | null {
   return (cachedAccount = parsed);
 }
 
-function base64url(input: string | Buffer) {
+function base64url(input: string | Uint8Array) {
   return Buffer.from(input).toString("base64url");
+}
+
+/**
+ * RS256 signature with Web Crypto, which both Node and Cloudflare Workers provide
+ * (node:crypto's createSign isn't available on Workers).
+ */
+let cachedKey: { pem: string; key: Promise<CryptoKey> } | null = null;
+async function signRs256(data: string, pem: string): Promise<Uint8Array> {
+  if (cachedKey?.pem !== pem) {
+    const der = Buffer.from(pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, ""), "base64");
+    const key = crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+    cachedKey = { pem, key };
+  }
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", await cachedKey.key, new TextEncoder().encode(data));
+  return new Uint8Array(signature);
 }
 
 /** OAuth access token for the Drive API, cached until shortly before it expires. */
@@ -46,7 +59,7 @@ export async function driveAccessToken(): Promise<string> {
       exp: now + 3600,
     }),
   );
-  const signature = createSign("RSA-SHA256").update(`${header}.${claims}`).sign(account.private_key);
+  const signature = await signRs256(`${header}.${claims}`, account.private_key);
   const assertion = `${header}.${claims}.${base64url(signature)}`;
 
   const res = await fetch("https://oauth2.googleapis.com/token", {

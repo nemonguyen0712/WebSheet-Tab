@@ -1,12 +1,13 @@
 import type { NextConfig } from "next";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
-  // Used on the server to stamp the viewer's name into files; keep them as plain Node packages.
-  serverExternalPackages: ["sharp", "@coderline/alphatab", "pdfjs-dist", "@napi-rs/canvas"],
-  outputFileTracingIncludes: {
-    // The stamp font (borrowed from pdf.js) and the canvas binary, both read from disk.
-    "/api/file/*": ["./node_modules/pdfjs-dist/standard_fonts/LiberationSans-Regular.ttf", "./node_modules/@napi-rs/**/*"],
-  },
+  // Left as plain packages for the Cloudflare build to resolve with its "workerd" conditions: Photon then loads
+  // its WebAssembly as a module (Workers don't compile WebAssembly from bytes at runtime).
+  serverExternalPackages: ["@coderline/alphatab", "@cf-wasm/photon"],
 };
 
 export default nextConfig;
+
+// `next dev`: lets getCloudflareContext() work locally (bindings from wrangler.jsonc).
+initOpenNextCloudflareForDev();

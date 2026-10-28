@@ -19,3 +19,11 @@ public/alphatab/
 # Environment variables to paste into Render (contains secrets)
 deploy.env
 netlify.env
+
+# Cloudflare (OpenNext build output, local Wrangler state, local secrets)
+.open-next/
+.wrangler/
+.dev.vars*
+
+# Secrets for Cloudflare (wrangler secret bulk)
+cloudflare-secrets.json
