@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { normalizePhone } from "./account";
 import { createAdminClient, createClient, supabaseConfigured } from "./supabase/server";
@@ -65,24 +65,37 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (dev !== undefined) return dev;
   if (!supabaseConfigured()) return null;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // FAST PATH: If no Supabase auth cookie exists, visitor is not signed in
+  const hasAuth = cookieStore.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  if (!hasAuth) return null;
+
+  // If proxy middleware already verified the user and passed x-user-id header, reuse it (~1s saved)
+  const headerList = await headers();
+  const userIdFromHeader = headerList.get("x-user-id");
+
+  let userId = userIdFromHeader;
+  if (!userId) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    userId = user.id;
+  }
 
   const admin = createAdminClient();
   const deviceId = cookieStore.get(DEVICE_COOKIE)?.value;
   const [{ data: profile }, { data: device }] = await Promise.all([
-    admin.from("profiles").select("username, phone, paid_until").eq("id", user.id).maybeSingle(),
+    admin.from("profiles").select("username, phone, paid_until").eq("id", userId).maybeSingle(),
     deviceId
-      ? admin.from("devices").select("id, last_seen").eq("id", deviceId).eq("user_id", user.id).maybeSingle()
+      ? admin.from("devices").select("id, last_seen").eq("id", deviceId).eq("user_id", userId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 
   // Record activity at most every ACTIVITY_EVERY_MS (for the online count in /admin).
+  // Run asynchronously without blocking the page render (~1s saved).
   if (device && Date.now() - Date.parse(device.last_seen) > ACTIVITY_EVERY_MS) {
-    await admin.from("devices").update({ last_seen: new Date().toISOString() }).eq("id", device.id);
+    admin.from("devices").update({ last_seen: new Date().toISOString() }).eq("id", device.id).then(() => {}, () => {});
   }
 
   if (!profile) return null;
@@ -90,7 +103,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const deviceOk = Boolean(device);
   const isAdmin = isAdminPhone(profile.phone);
   return {
-    id: user.id,
+    id: userId,
     username: profile.username,
     phone: profile.phone,
     paidUntil,

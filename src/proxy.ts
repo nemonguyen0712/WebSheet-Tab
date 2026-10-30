@@ -3,20 +3,30 @@ import { type NextRequest, NextResponse } from "next/server";
 
 /** Keeps the Supabase login session fresh by refreshing its cookies on each page request. */
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return response;
+
+  // FAST PATH: If no Supabase auth cookie exists, skip querying Supabase Auth (~1s saved for visitors)
+  const hasAuth = request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  if (!hasAuth) return response;
 
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (toSet) => {
         for (const { name, value } of toSet) request.cookies.set(name, value);
-        response = NextResponse.next({ request });
+        response = NextResponse.next({ request: { headers: requestHeaders } });
         for (const { name, value, options } of toSet) response.cookies.set(name, value, options);
       },
     },
   });
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    requestHeaders.set("x-user-id", user.id);
+  }
   return response;
 }
 
