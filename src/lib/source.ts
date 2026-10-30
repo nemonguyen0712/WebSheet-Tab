@@ -38,22 +38,77 @@ export function sectionOf(folderName: string): Section | null {
   return null;
 }
 
+// ---------- Cloudflare KV Cache ----------
+
+interface KVNamespace {
+  get(key: string, type: "json"): Promise<unknown>;
+  get(key: string, type?: "text"): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+async function kvBinding(): Promise<KVNamespace | null> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    return (getCloudflareContext().env as { CACHE?: KVNamespace }).CACHE ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const SONGS_CACHE_KEY = "oliu:songs:v1";
+/** Keep songs cached in KV for 24 hours. Admin can force re-sync at any time. */
+const SONGS_CACHE_TTL = 86400;
+
+export async function clearSongsCache(): Promise<void> {
+  memo.clear();
+  const kv = await kvBinding();
+  if (kv) {
+    try {
+      await kv.delete(SONGS_CACHE_KEY);
+    } catch (e) {
+      console.error("Lỗi xóa KV cache:", e);
+    }
+  }
+}
+
 /** For /admin: how many songs one root folder holds and in which sections, or why it can't be read. */
-export function checkDriveFolder(
+export async function checkDriveFolder(
   id: string,
   section: Section | null,
+  options?: { live?: boolean },
 ): Promise<{ songs: number; sections: [string, number][] } | { error: string }> {
-  return remember(`checkFolder:${id}:${section}`, async () => {
+  const kv = await kvBinding();
+  const key = `oliu:folder:${id}:v1`;
+
+  // On page loads in /admin: read cached summary from KV in 1ms instead of crawling Drive!
+  if (!options?.live && kv) {
     try {
-      const songs = groupSongs(await walkTree(id, section));
-      const bySection = new Map<string, number>();
-      for (const s of songs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
-      return { songs: songs.length, sections: [...bySection] };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
+      const cached = (await kv.get(key, "json")) as { songs: number; sections: [string, number][] } | null;
+      if (cached && typeof cached.songs === "number") return cached;
+    } catch {}
+  }
+
+  // Only crawl Google Drive if live check requested (e.g. adding a folder in /admin)
+  if (!options?.live) {
+    return { songs: 0, sections: [] };
+  }
+
+  try {
+    const songs = groupSongs(await walkTree(id, section));
+    const bySection = new Map<string, number>();
+    for (const s of songs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
+    const res = { songs: songs.length, sections: [...bySection] };
+    if (kv) {
+      try {
+        await kv.put(key, JSON.stringify(res), { expirationTtl: SONGS_CACHE_TTL });
+      } catch {}
     }
-  });
+    return res;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
+  }
 }
 
 /** The email Drive folders must be shared with (Viewer). */
@@ -230,50 +285,24 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
   return [...songs.values()].filter((s) => s.files.length > 0).sort((a, b) => collator.compare(a.title, b.title));
 }
 
-// ---------- Cloudflare KV Cache ----------
-
-interface KVNamespace {
-  get(key: string, type: "json"): Promise<unknown>;
-  get(key: string, type?: "text"): Promise<string | null>;
-  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
-  delete(key: string): Promise<void>;
-}
-
-async function kvBinding(): Promise<KVNamespace | null> {
-  try {
-    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-    return (getCloudflareContext().env as { CACHE?: KVNamespace }).CACHE ?? null;
-  } catch {
-    return null;
-  }
-}
-
-const SONGS_CACHE_KEY = "oliu:songs:v1";
-/** Keep songs cached in KV for 24 hours. Admin can force re-sync at any time. */
-const SONGS_CACHE_TTL = 86400;
-
-export async function clearSongsCache(): Promise<void> {
-  memo.clear();
-  const kv = await kvBinding();
-  if (kv) {
-    try {
-      await kv.delete(SONGS_CACHE_KEY);
-    } catch (e) {
-      console.error("Lỗi xóa KV cache:", e);
-    }
-  }
-}
-
 async function fetchSongsFromDrive(): Promise<{ songs: Song[]; error: string | null }> {
   // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
   const roots = await rootFolders();
   const results: PromiseSettledResult<(TabFile & { link?: LinkKind })[]>[] = [];
+  const kv = await kvBinding();
 
   // Walk root folders sequentially so they don't fight for Cloudflare's outgoing connections
   for (const r of roots) {
     try {
       const files = await walkTree(r.id, r.section);
       results.push({ status: "fulfilled", value: files });
+      // Cache folder summary so /admin loads instantly without hitting Drive!
+      if (kv) {
+        const folderSongs = groupSongs(files);
+        const bySection = new Map<string, number>();
+        for (const s of folderSongs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
+        await kv.put(`oliu:folder:${r.id}:v1`, JSON.stringify({ songs: folderSongs.length, sections: [...bySection] }), { expirationTtl: SONGS_CACHE_TTL }).catch(() => {});
+      }
     } catch (reason) {
       results.push({ status: "rejected", reason });
     }

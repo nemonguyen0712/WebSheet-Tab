@@ -65,7 +65,7 @@ async function addFolder(formData: FormData) {
   const id = folderIdFrom(String(formData.get("folder") ?? ""));
   if (!id) redirect("/admin?thumuc=sai#drive");
   const section = sectionFrom(formData.get("section"));
-  const check = await checkDriveFolder(id, section);
+  const check = await checkDriveFolder(id, section, { live: true });
   if ("error" in check) redirect("/admin?thumuc=khongdoc#drive");
   const label = String(formData.get("label") ?? "").trim().slice(0, 60);
   const { error } = await createAdminClient().from("drive_folders").upsert({ id, label, section });
