@@ -65,9 +65,19 @@ export function PdfViewer({ url, watermark }: { url: string; watermark?: string 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => setWidth(Math.floor(entry.contentRect.width)));
-    ro.observe(el);
-    return () => ro.disconnect();
+    const updateWidth = () => {
+      const w = el.clientWidth || Math.floor(el.getBoundingClientRect().width);
+      if (w > 0) setWidth(w);
+    };
+    updateWidth();
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(([entry]) => {
+        const w = Math.floor(entry.contentRect.width);
+        if (w > 0) setWidth(w);
+      });
+      ro.observe(el);
+      return () => ro.disconnect();
+    }
   }, []);
 
   if (failed) {
@@ -125,33 +135,53 @@ function PdfPage({
   cssWidth: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [visible, setVisible] = useState(false);
+  // First 2 pages are visible immediately so mobile browsers never show blank waiting for IntersectionObserver
+  const [visible, setVisible] = useState(pageNumber <= 2);
   const cssHeight = Math.floor((cssWidth * size.height) / size.width);
 
   useEffect(() => {
+    if (visible) return;
     const el = canvasRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), {
-      rootMargin: "1200px 0px",
-    });
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setVisible(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "1200px 0px" },
+    );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
     let task: RenderTask | null = null;
     let cancelled = false;
     (async () => {
-      const page = await doc.getPage(pageNumber);
-      const canvas = canvasRef.current;
-      if (cancelled || !canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 3);
-      const viewport = page.getViewport({ scale: (cssWidth / size.width) * dpr });
-      canvas.width = Math.floor(viewport.width);
-      canvas.height = Math.floor(viewport.height);
-      task = page.render({ canvas, viewport });
-      await task.promise.catch(() => {});
+      try {
+        const page = await doc.getPage(pageNumber);
+        const canvas = canvasRef.current;
+        if (cancelled || !canvas) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
+        const viewport = page.getViewport({ scale: (cssWidth / size.width) * dpr });
+        canvas.width = Math.floor(viewport.width);
+        canvas.height = Math.floor(viewport.height);
+        const canvasContext = canvas.getContext("2d");
+        if (!canvasContext) return;
+        task = page.render({ canvas, canvasContext, viewport });
+        await task.promise;
+      } catch (err: unknown) {
+        if ((err as { name?: string })?.name !== "RenderingCancelledException") {
+          console.error(`Lỗi render PDF trang ${pageNumber}:`, err);
+        }
+      }
     })();
     return () => {
       cancelled = true;

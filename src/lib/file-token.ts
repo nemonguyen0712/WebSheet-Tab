@@ -39,8 +39,27 @@ export function verifyFileToken(fileId: string, viewer: Viewer, token: string | 
 export function isSameSiteSubresource(req: Request): boolean {
   const site = req.headers.get("sec-fetch-site");
   const dest = req.headers.get("sec-fetch-dest");
-  if (site || dest) return site === "same-origin" && dest !== "document" && dest !== "iframe";
-  // Older browsers without Sec-Fetch-* headers: fall back to the Referer.
+
+  // Definitely reject top-level document navigation or iframe embeds
+  if (dest === "document" || dest === "iframe") return false;
+  // Definitely reject cross-site requests
+  if (site === "cross-site") return false;
+
+  // Same-origin or same-site subresources are allowed
+  if (site === "same-origin" || site === "same-site") return true;
+
+  // Check Referer header if available
   const referer = req.headers.get("referer");
-  return Boolean(referer && new URL(referer).origin === new URL(req.url).origin);
+  if (referer) {
+    try {
+      return new URL(referer).origin === new URL(req.url).origin;
+    } catch {
+      return false;
+    }
+  }
+
+  // Fallback for mobile browsers, in-app webviews (Zalo, Facebook), and web workers
+  // where sec-fetch-site is "none" or headers are omitted by the client.
+  return dest !== "document" && dest !== "iframe";
 }
+

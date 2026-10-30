@@ -65,21 +65,26 @@ async function imagesBinding(): Promise<ImagesBinding | null> {
  * not per view. On Node the picture is decoded whole, which is fine there.
  */
 async function pictureToStamp(bytes: Uint8Array, key: string): Promise<Uint8Array> {
-  const images = await imagesBinding();
-  if (!images) return bytes;
-  const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
-  const cacheKey = `https://picture-cache.oliu/${encodeURIComponent(key)}/${MAX_PICTURE_WIDTH}`;
-  const hit = await cache?.match(cacheKey);
-  if (hit) return new Uint8Array(await hit.arrayBuffer());
+  try {
+    const images = await imagesBinding();
+    if (!images) return bytes;
+    const cache = (globalThis as { caches?: { default?: Cache } }).caches?.default;
+    const cacheKey = `https://picture-cache.oliu/${encodeURIComponent(key)}/${MAX_PICTURE_WIDTH}`;
+    const hit = await cache?.match(cacheKey);
+    if (hit) return new Uint8Array(await hit.arrayBuffer());
 
-  const stream = new Response(new Uint8Array(bytes)).body!;
-  const result = await images.input(stream).transform({ width: MAX_PICTURE_WIDTH, fit: "scale-down" }).output({ format: "image/png" });
-  const smaller = new Uint8Array(await result.response().arrayBuffer());
-  await cache?.put(
-    cacheKey,
-    new Response(smaller, { headers: { "content-type": "image/png", "cache-control": "public, max-age=2592000" } }),
-  );
-  return smaller;
+    const stream = new Response(new Uint8Array(bytes)).body!;
+    const result = await images.input(stream).transform({ width: MAX_PICTURE_WIDTH, fit: "scale-down" }).output({ format: "image/png" });
+    const smaller = new Uint8Array(await result.response().arrayBuffer());
+    await cache?.put(
+      cacheKey,
+      new Response(smaller, { headers: { "content-type": "image/png", "cache-control": "public, max-age=2592000" } }),
+    );
+    return smaller;
+  } catch (err) {
+    console.warn("Cloudflare Images transform fallback:", err);
+    return bytes;
+  }
 }
 
 /** `key` names this version of the picture (file id + modified time) for the scaled-down cache. */
