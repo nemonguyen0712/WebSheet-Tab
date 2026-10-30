@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SyncDriveButton } from "@/components/SyncDriveButton";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
 import { folderIdFrom, forgetDriveFolders, listDriveFolders, sectionFrom } from "@/lib/drive-folders";
 import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
@@ -207,9 +208,7 @@ export default async function AdminPage({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold">Thư mục Google Drive</h2>
           <form action={syncDrive}>
-            <button className="h-8 rounded-lg border border-border bg-bg px-3 text-xs font-medium text-fg hover:border-accent hover:text-accent">
-              🔄 Đồng bộ lại từ Drive (Lưu KV)
-            </button>
+            <SyncDriveButton />
           </form>
         </div>
         <p className="mt-1 text-sm text-muted">

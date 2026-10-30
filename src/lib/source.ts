@@ -79,34 +79,33 @@ async function walkTree(rootId: string, section: Section | null = null) {
   const out: (TabFile & { link?: LinkKind })[] = [];
   async function walk(folderId: string, folder: string[], parentId: string | null) {
     const entries = await driveChildren(folderId);
-    await Promise.all(
-      entries.map(async (e) => {
-        if (e.isFolder) {
-          const atTop = !section && folder.length === 0;
-          const top = atTop ? sectionOf(e.name) : null;
-          const name = top ? SECTION_NAME[top] : e.name;
-          if (folder.length < MAX_DEPTH) await walk(e.id, [...folder, name], e.id);
-          return;
-        }
-        const isGoogleFile = e.mimeType.startsWith("application/vnd.google-apps.");
-        const ext = isGoogleFile ? "" : splitExt(e.name)[1];
-        const link = detectLinkKind(e.name, ext, e.mimeType);
-        const kind = link ? "text" : detectKind(ext, e.mimeType);
-        if (!kind) return; // audio, video clips, other documents
-        out.push({
-          ...(link && { link }),
-          id: e.id,
-          name: e.name,
-          folder,
-          parentId,
-          ext,
-          mimeType: e.mimeType,
-          kind,
-          size: e.size,
-          modifiedTime: e.modifiedTime,
-        });
-      }),
-    );
+    // Process sequentially so Cloudflare Workers doesn't exceed simultaneous outgoing sockets
+    for (const e of entries) {
+      if (e.isFolder) {
+        const atTop = !section && folder.length === 0;
+        const top = atTop ? sectionOf(e.name) : null;
+        const name = top ? SECTION_NAME[top] : e.name;
+        if (folder.length < MAX_DEPTH) await walk(e.id, [...folder, name], e.id);
+        continue;
+      }
+      const isGoogleFile = e.mimeType.startsWith("application/vnd.google-apps.");
+      const ext = isGoogleFile ? "" : splitExt(e.name)[1];
+      const link = detectLinkKind(e.name, ext, e.mimeType);
+      const kind = link ? "text" : detectKind(ext, e.mimeType);
+      if (!kind) continue; // audio, video clips, other documents
+      out.push({
+        ...(link && { link }),
+        id: e.id,
+        name: e.name,
+        folder,
+        parentId,
+        ext,
+        mimeType: e.mimeType,
+        kind,
+        size: e.size,
+        modifiedTime: e.modifiedTime,
+      });
+    }
   }
   await walk(rootId, section ? [SECTION_NAME[section]] : [], null);
   return out;
@@ -267,16 +266,26 @@ export async function clearSongsCache(): Promise<void> {
 
 async function fetchSongsFromDrive(): Promise<{ songs: Song[]; error: string | null }> {
   // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
-  // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
   const roots = await rootFolders();
-  const results = await Promise.allSettled(roots.map((r) => walkTree(r.id, r.section)));
+  const results: PromiseSettledResult<(TabFile & { link?: LinkKind })[]>[] = [];
+
+  // Walk root folders sequentially so they don't fight for Cloudflare's outgoing connections
+  for (const r of roots) {
+    try {
+      const files = await walkTree(r.id, r.section);
+      results.push({ status: "fulfilled", value: files });
+    } catch (reason) {
+      results.push({ status: "rejected", reason });
+    }
+  }
+
   const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
   const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i].id, reason: r.reason }] : []));
   for (const f of failed) unstable_rethrow(f.reason);
   if (failed.length === roots.length) throw failed[0].reason;
   for (const f of failed) console.error("Drive folder", f.id, f.reason);
   const error = failed.length
-    ? `Không đọc được ${failed.length}/${roots.length} thư mục Drive (chưa chia sẻ cho tài khoản dịch vụ?): ${failed.map((f) => f.id).join(", ")}`
+    ? `Không đọc được ${failed.length}/${roots.length} thư mục Drive: ${failed.map((f) => `${f.id} (${f.reason instanceof Error ? f.reason.message : String(f.reason)})`).join("; ")}`
     : null;
   return { songs: groupSongs(files), error };
 }
@@ -309,7 +318,8 @@ export const listSongs = cache(async (options?: { forceRefresh?: boolean }): Pro
   // 3. Scan Google Drive
   try {
     const result = await fetchSongsFromDrive();
-    if (kv && result.songs.length > 0) {
+    // Only cache if clean (no partial errors) so failures don't stick in KV for 24 hours
+    if (kv && result.songs.length > 0 && !result.error) {
       try {
         await kv.put(SONGS_CACHE_KEY, JSON.stringify(result), { expirationTtl: SONGS_CACHE_TTL });
       } catch (err) {
