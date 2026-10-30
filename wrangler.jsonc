@@ -16,6 +16,12 @@
       "service": "oliu"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "e037e39387f44af3a98b05f527890a4f"
+    }
+  ],
   // Cloudflare Images: scales the 600 dpi sheet pictures down before the name is stamped (src/lib/stamp.ts).
   "images": {
     "binding": "IMAGES"

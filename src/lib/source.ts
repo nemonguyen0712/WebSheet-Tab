@@ -39,19 +39,21 @@ export function sectionOf(folderName: string): Section | null {
 }
 
 /** For /admin: how many songs one root folder holds and in which sections, or why it can't be read. */
-export async function checkDriveFolder(
+export function checkDriveFolder(
   id: string,
   section: Section | null,
 ): Promise<{ songs: number; sections: [string, number][] } | { error: string }> {
-  try {
-    const songs = groupSongs(await walkTree(id, section));
-    const bySection = new Map<string, number>();
-    for (const s of songs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
-    return { songs: songs.length, sections: [...bySection] };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
-  }
+  return remember(`checkFolder:${id}:${section}`, async () => {
+    try {
+      const songs = groupSongs(await walkTree(id, section));
+      const bySection = new Map<string, number>();
+      for (const s of songs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
+      return { songs: songs.length, sections: [...bySection] };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { error: /\b40[34]\b/.test(message) ? "Không đọc được: thư mục chưa chia sẻ cho tài khoản dịch vụ, hoặc link sai." : message };
+    }
+  });
 }
 
 /** The email Drive folders must be shared with (Viewer). */
@@ -229,26 +231,110 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
   return [...songs.values()].filter((s) => s.files.length > 0).sort((a, b) => collator.compare(a.title, b.title));
 }
 
+// ---------- Cloudflare KV Cache ----------
+
+interface KVNamespace {
+  get(key: string, type: "json"): Promise<unknown>;
+  get(key: string, type?: "text"): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+}
+
+async function kvBinding(): Promise<KVNamespace | null> {
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    return (getCloudflareContext().env as { CACHE?: KVNamespace }).CACHE ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const SONGS_CACHE_KEY = "oliu:songs:v1";
+/** Keep songs cached in KV for 24 hours. Admin can force re-sync at any time. */
+const SONGS_CACHE_TTL = 86400;
+
+export async function clearSongsCache(): Promise<void> {
+  memo.clear();
+  const kv = await kvBinding();
+  if (kv) {
+    try {
+      await kv.delete(SONGS_CACHE_KEY);
+    } catch (e) {
+      console.error("Lỗi xóa KV cache:", e);
+    }
+  }
+}
+
+async function fetchSongsFromDrive(): Promise<{ songs: Song[]; error: string | null }> {
+  // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
+  // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
+  const roots = await rootFolders();
+  const results = await Promise.allSettled(roots.map((r) => walkTree(r.id, r.section)));
+  const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i].id, reason: r.reason }] : []));
+  for (const f of failed) unstable_rethrow(f.reason);
+  if (failed.length === roots.length) throw failed[0].reason;
+  for (const f of failed) console.error("Drive folder", f.id, f.reason);
+  const error = failed.length
+    ? `Không đọc được ${failed.length}/${roots.length} thư mục Drive (chưa chia sẻ cho tài khoản dịch vụ?): ${failed.map((f) => f.id).join(", ")}`
+    : null;
+  return { songs: groupSongs(files), error };
+}
+
 // ---------- Public API ----------
 
-export const listSongs = cache(async (): Promise<{ songs: Song[]; error: string | null }> => {
+export const listSongs = cache(async (options?: { forceRefresh?: boolean }): Promise<{ songs: Song[]; error: string | null }> => {
+  const force = options?.forceRefresh ?? false;
+
+  // 1. In-memory per-process cache (fastest, hits within the same worker isolate)
+  if (!force) {
+    const hit = memo.get("songs");
+    if (hit && hit.expires > Date.now()) return hit.value as Promise<{ songs: Song[]; error: string | null }>;
+  }
+
+  // 2. Cloudflare KV cache (shared across all edge isolates, 0 Drive API requests)
+  const kv = await kvBinding();
+  if (kv && !force) {
+    try {
+      const cached = (await kv.get(SONGS_CACHE_KEY, "json")) as { songs: Song[]; error: string | null } | null;
+      if (cached && Array.isArray(cached.songs) && cached.songs.length > 0) {
+        memo.set("songs", { expires: Date.now() + REVALIDATE_SECONDS * 1000, value: Promise.resolve(cached) });
+        return cached;
+      }
+    } catch (err) {
+      console.error("Lỗi đọc KV:", err);
+    }
+  }
+
+  // 3. Scan Google Drive
   try {
-    // Every root folder's songs together; "Solo" / "Melody" of different owners merge into one section.
-    // One folder failing (not shared yet, deleted…) leaves the others' songs on the site.
-    const roots = await rootFolders();
-    const results = await Promise.allSettled(roots.map((r) => walkTree(r.id, r.section)));
-    const files = results.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-    const failed = results.flatMap((r, i) => (r.status === "rejected" ? [{ id: roots[i].id, reason: r.reason }] : []));
-    for (const f of failed) unstable_rethrow(f.reason);
-    if (failed.length === roots.length) throw failed[0].reason;
-    for (const f of failed) console.error("Drive folder", f.id, f.reason);
-    const error = failed.length
-      ? `Không đọc được ${failed.length}/${roots.length} thư mục Drive (chưa chia sẻ cho tài khoản dịch vụ?): ${failed.map((f) => f.id).join(", ")}`
-      : null;
-    return { songs: groupSongs(files), error };
+    const result = await fetchSongsFromDrive();
+    if (kv && result.songs.length > 0) {
+      try {
+        await kv.put(SONGS_CACHE_KEY, JSON.stringify(result), { expirationTtl: SONGS_CACHE_TTL });
+      } catch (err) {
+        console.error("Lỗi ghi KV:", err);
+      }
+    }
+    memo.set("songs", { expires: Date.now() + REVALIDATE_SECONDS * 1000, value: Promise.resolve(result) });
+    return result;
   } catch (err) {
     unstable_rethrow(err); // let Next.js's own render signals through
-    console.error(err);
+    console.error("Lỗi đọc Drive:", err);
+
+    // Fallback nếu Drive bị lỗi/chạm rate limit: trả về bản lưu cũ trong KV thay vì để web sập
+    if (kv) {
+      try {
+        const stale = (await kv.get(SONGS_CACHE_KEY, "json")) as { songs: Song[]; error: string | null } | null;
+        if (stale && Array.isArray(stale.songs) && stale.songs.length > 0) {
+          return {
+            songs: stale.songs,
+            error: "Đang tải bản lưu tạm (Google Drive đang bận hoặc giới hạn kết nối).",
+          };
+        }
+      } catch {}
+    }
+
     return { songs: [], error: err instanceof Error ? err.message : String(err) };
   }
 });

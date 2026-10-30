@@ -7,7 +7,7 @@ import { folderIdFrom, forgetDriveFolders, listDriveFolders, sectionFrom } from 
 import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { REQUEST_STATUS_LABEL, SONG_REQUESTS_PER_MONTH, type SongRequest, dayStartVN } from "@/lib/requests";
-import { checkDriveFolder, serviceAccountEmail } from "@/lib/source";
+import { checkDriveFolder, clearSongsCache, listSongs, serviceAccountEmail } from "@/lib/source";
 import { createAdminClient, supabaseConfigured } from "@/lib/supabase/server";
 import { FILE_VIEW_LIMIT_PER_HOUR } from "@/lib/views";
 import { ONLINE_WINDOW_MS, getViewer } from "@/lib/viewer";
@@ -69,6 +69,7 @@ async function addFolder(formData: FormData) {
   const label = String(formData.get("label") ?? "").trim().slice(0, 60);
   const { error } = await createAdminClient().from("drive_folders").upsert({ id, label, section });
   forgetDriveFolders();
+  await clearSongsCache();
   redirect(error ? "/admin?thumuc=loi#drive" : `/admin?thumuc=ok&so=${check.songs}#drive`);
 }
 
@@ -77,7 +78,18 @@ async function removeFolder(formData: FormData) {
   await requireAdmin();
   await createAdminClient().from("drive_folders").delete().eq("id", String(formData.get("id")));
   forgetDriveFolders();
+  await clearSongsCache();
   redirect("/admin?thumuc=xoa#drive");
+}
+
+/** Re-syncs the song library from Google Drive into Cloudflare KV. */
+async function syncDrive() {
+  "use server";
+  await requireAdmin();
+  forgetDriveFolders();
+  await clearSongsCache();
+  const res = await listSongs({ forceRefresh: true });
+  redirect(`/admin?thumuc=dongbo&so=${res.songs.length}#drive`);
 }
 
 /** A song request: done (the song is up) or rejected (with a reason; the customer gets the request back). */
@@ -99,6 +111,7 @@ const SECTION_LABELS = { solo: "Chỉ Solo", melody: "Chỉ Melody" } as const;
 const FOLDER_MESSAGES: Record<string, string> = {
   ok: "Đã thêm thư mục. Bài trong đó lên web ngay (các máy chủ khác cập nhật trong khoảng 1 phút).",
   xoa: "Đã gỡ thư mục khỏi web. File trên Drive không bị đụng tới.",
+  dongbo: "Đã đồng bộ thành công bài hát từ Google Drive vào bộ nhớ đệm KV!",
   sai: "Link không đúng: dán link thư mục Drive (có /folders/…) hoặc ID của thư mục.",
   khongdoc: "Chưa đọc được thư mục: chủ thư mục cần chia sẻ (Người xem) cho email tài khoản dịch vụ ở trên, rồi thêm lại.",
   loi: "Chưa lưu được. Đã chạy supabase/migrations/004_drive_folders.sql trong Supabase chưa?",
@@ -191,7 +204,14 @@ export default async function AdminPage({
       </section>
 
       <section id="drive" className="scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
-        <h2 className="font-semibold">Thư mục Google Drive</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold">Thư mục Google Drive</h2>
+          <form action={syncDrive}>
+            <button className="h-8 rounded-lg border border-border bg-bg px-3 text-xs font-medium text-fg hover:border-accent hover:text-accent">
+              🔄 Đồng bộ lại từ Drive (Lưu KV)
+            </button>
+          </form>
+        </div>
         <p className="mt-1 text-sm text-muted">
           Bài của mọi thư mục được gộp chung trên web; mục cùng tên (Solo, Melody…) gộp làm một. Thêm thư mục của người khác:
           chủ thư mục chia sẻ thư mục (quyền <b>Người xem</b>) cho{" "}
