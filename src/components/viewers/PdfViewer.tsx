@@ -30,12 +30,26 @@ export function PdfViewer({ url, watermark }: { url: string; watermark?: string 
     let task: PDFDocumentLoadingTask | null = null;
     (async () => {
       try {
+        // Polyfill Promise.withResolvers for Safari < 17.4 and older WebKit
+        if (typeof Promise !== "undefined" && !Promise.withResolvers) {
+          Promise.withResolvers = function <T>() {
+            let resolve!: (value: T | PromiseLike<T>) => void;
+            let reject!: (reason?: any) => void;
+            const promise = new Promise<T>((res, rej) => {
+              resolve = res;
+              reject = rej;
+            });
+            return { promise, resolve, reject };
+          };
+        }
+
         // Served from public/ (scripts/copy-assets.mjs) instead of bundled: the browser is the only place it
         // runs, and a bundled copy would also land in the server build, eating into the Worker size limit.
         const pdfjs: typeof import("pdfjs-dist") = await import(/* webpackIgnore: true */ /* turbopackIgnore: true */ PDFJS);
         pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
         task = pdfjs.getDocument({
           url,
+          withCredentials: true,
           cMapUrl: "/pdfjs/cmaps/",
           cMapPacked: true,
           standardFontDataUrl: "/pdfjs/standard_fonts/",
@@ -52,7 +66,7 @@ export function PdfViewer({ url, watermark }: { url: string; watermark?: string 
         setSizes(pageSizes);
         setDoc(loaded);
       } catch (err) {
-        console.error(err);
+        console.error("Lỗi tải PDF:", err);
         if (!cancelled && !retryExpiredLink()) setFailed(true);
       }
     })();
@@ -169,13 +183,29 @@ function PdfPage({
         const page = await doc.getPage(pageNumber);
         const canvas = canvasRef.current;
         if (cancelled || !canvas) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 3);
-        const viewport = page.getViewport({ scale: (cssWidth / size.width) * dpr });
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
+
+        // Cap dpr at 2 to protect against Safari canvas buffer memory limits on high-res Retina displays
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const scale = cssWidth / size.width;
+        const viewport = page.getViewport({ scale });
+
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+
         const canvasContext = canvas.getContext("2d");
         if (!canvasContext) return;
-        task = page.render({ canvas, canvasContext, viewport });
+
+        // Clear canvas before painting
+        canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+        const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined;
+
+        task = page.render({
+          canvas: null,
+          canvasContext,
+          transform,
+          viewport,
+        });
         await task.promise;
       } catch (err: unknown) {
         if ((err as { name?: string })?.name !== "RenderingCancelledException") {

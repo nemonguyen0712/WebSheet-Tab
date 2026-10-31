@@ -58,7 +58,7 @@ export function NotationViewer({ url, ext, watermark }: { url: string; ext: stri
     (async () => {
       try {
         const at = await loadAlphaTab();
-        const res = await fetch(url);
+        const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error(`Không tải được file (${res.status})`);
         const data = ext === "atex" || ext === "alphatex" ? await res.text() : new Uint8Array(await res.arrayBuffer());
         if (cancelled || !mainRef.current) return;

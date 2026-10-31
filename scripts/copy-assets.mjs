@@ -1,6 +1,6 @@
 // Copies runtime assets for pdf.js and alphaTab from node_modules into public/,
 // so they're served as plain static files (workers, fonts, soundfont). Runs on `npm install`.
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,9 +17,24 @@ function copy(from, to, filter) {
   cpSync(from, to, { recursive: true, filter });
 }
 
+// Polyfill Promise.withResolvers for Safari < 17.4 and older WebKit engines
+const WITH_RESOLVERS_POLYFILL =
+  "if(!Promise.withResolvers){Promise.withResolvers=function(){var a,b,c=new Promise(function(d,e){a=d;b=e});return{promise:c,resolve:a,reject:b}}};\n";
+
+function copyWithPolyfill(from, to) {
+  if (!existsSync(from)) {
+    console.warn(`[copy-assets] missing ${from}`);
+    return;
+  }
+  mkdirSync(dirname(to), { recursive: true });
+  const content = readFileSync(from, "utf8");
+  writeFileSync(to, WITH_RESOLVERS_POLYFILL + content, "utf8");
+}
+
 rmSync(pub("pdfjs"), { recursive: true, force: true });
-copy(nm("pdfjs-dist/build/pdf.min.mjs"), pub("pdfjs/pdf.min.mjs"));
-copy(nm("pdfjs-dist/build/pdf.worker.min.mjs"), pub("pdfjs/pdf.worker.min.mjs"));
+// Use legacy build for maximum Safari / iOS WebKit compatibility (no module worker restrictions)
+copyWithPolyfill(nm("pdfjs-dist/legacy/build/pdf.min.mjs"), pub("pdfjs/pdf.min.mjs"));
+copyWithPolyfill(nm("pdfjs-dist/legacy/build/pdf.worker.min.mjs"), pub("pdfjs/pdf.worker.min.mjs"));
 copy(nm("pdfjs-dist/cmaps"), pub("pdfjs/cmaps"));
 copy(nm("pdfjs-dist/standard_fonts"), pub("pdfjs/standard_fonts"));
 copy(nm("pdfjs-dist/wasm"), pub("pdfjs/wasm"), (src) => !/LICENSE/.test(src));
