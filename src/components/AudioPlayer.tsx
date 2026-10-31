@@ -130,7 +130,7 @@ export function AudioPlayer({ url, title, fileName }: AudioPlayerProps) {
               <circle cx="18" cy="16" r="3" />
             </svg>
           </div>
-          <span className="truncate text-xs font-medium text-foreground sm:text-sm">
+          <span className="truncate text-xs font-medium text-fg sm:text-sm">
             {fileName || title || "Bản thu âm / Backing track"}
           </span>
         </div>
@@ -140,7 +140,7 @@ export function AudioPlayer({ url, title, fileName }: AudioPlayerProps) {
           type="button"
           onClick={cycleSpeed}
           title="Tốc độ phát (chạm để đổi)"
-          className="shrink-0 rounded-md border border-border bg-surface-2 px-2 py-0.5 text-xs font-semibold tabular-nums text-foreground hover:border-accent"
+          className="shrink-0 rounded-md border border-border bg-surface-2 px-2 py-0.5 text-xs font-semibold tabular-nums text-fg hover:border-accent"
         >
           {RATES[rateIdx]}x
         </button>
@@ -184,7 +184,7 @@ export function AudioPlayer({ url, title, fileName }: AudioPlayerProps) {
           onClick={() => skip(-5)}
           title="Lùi 5 giây"
           aria-label="Lùi 5 giây"
-          className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-foreground"
+          className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-fg"
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M1 4v6h6" strokeLinecap="round" strokeLinejoin="round" />
@@ -224,7 +224,7 @@ export function AudioPlayer({ url, title, fileName }: AudioPlayerProps) {
           onClick={() => skip(5)}
           title="Tới 5 giây"
           aria-label="Tới 5 giây"
-          className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-foreground"
+          className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-fg"
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M23 4v6h-6" strokeLinecap="round" strokeLinejoin="round" />

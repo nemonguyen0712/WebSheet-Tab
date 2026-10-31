@@ -56,7 +56,7 @@ async function kvBinding(): Promise<KVNamespace | null> {
   }
 }
 
-const SONGS_CACHE_KEY = "oliu:songs:v1";
+const SONGS_CACHE_KEY = "oliu:songs:v2";
 /** Keep songs cached in KV for 24 hours. Admin can force re-sync at any time. */
 const SONGS_CACHE_TTL = 86400;
 
@@ -66,6 +66,7 @@ export async function clearSongsCache(): Promise<void> {
   if (kv) {
     try {
       await kv.delete(SONGS_CACHE_KEY);
+      await kv.delete("oliu:songs:v1");
     } catch (e) {
       console.error("Lỗi xóa KV cache:", e);
     }
@@ -79,7 +80,7 @@ export async function checkDriveFolder(
   options?: { live?: boolean },
 ): Promise<{ songs: number; sections: [string, number][] } | { error: string }> {
   const kv = await kvBinding();
-  const key = `oliu:folder:${id}:v1`;
+  const key = `oliu:folder:${id}:v2`;
 
   // On page loads in /admin: read cached summary from KV in 1ms instead of crawling Drive!
   if (!options?.live && kv) {
@@ -311,7 +312,7 @@ async function fetchSongsFromDrive(): Promise<{ songs: Song[]; error: string | n
         const folderSongs = groupSongs(files);
         const bySection = new Map<string, number>();
         for (const s of folderSongs) bySection.set(s.category[0] ?? "", (bySection.get(s.category[0] ?? "") ?? 0) + 1);
-        await kv.put(`oliu:folder:${r.id}:v1`, JSON.stringify({ songs: folderSongs.length, sections: [...bySection] }), { expirationTtl: SONGS_CACHE_TTL }).catch(() => {});
+        await kv.put(`oliu:folder:${r.id}:v2`, JSON.stringify({ songs: folderSongs.length, sections: [...bySection] }), { expirationTtl: SONGS_CACHE_TTL }).catch(() => {});
       }
     } catch (reason) {
       results.push({ status: "rejected", reason });
