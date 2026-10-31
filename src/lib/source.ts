@@ -272,6 +272,16 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
       song.links[link] ??= f;
       continue;
     }
+    if (f.kind === "audio") {
+      song.audios ??= [];
+      song.audios.push(f);
+      // Prefer mp3 over wav/other formats as the primary playback audio
+      if (!song.audio || (f.ext === "mp3" && song.audio.ext !== "mp3")) {
+        song.audio = f;
+      }
+      if (f.modifiedTime && (!song.modifiedTime || f.modifiedTime > song.modifiedTime)) song.modifiedTime = f.modifiedTime;
+      continue;
+    }
     song.files.push(f);
     if (f.modifiedTime && (!song.modifiedTime || f.modifiedTime > song.modifiedTime)) song.modifiedTime = f.modifiedTime;
   }
@@ -281,8 +291,8 @@ function groupSongs(files: (TabFile & { link?: LinkKind })[]): Song[] {
       (a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || collator.compare(a.name, b.name),
     );
   }
-  // A folder holding only link files has nothing to show.
-  return [...songs.values()].filter((s) => s.files.length > 0).sort((a, b) => collator.compare(a.title, b.title));
+  // A folder holding sheet files or audio files can be shown.
+  return [...songs.values()].filter((s) => s.files.length > 0 || Boolean(s.audio)).sort((a, b) => collator.compare(a.title, b.title));
 }
 
 async function fetchSongsFromDrive(): Promise<{ songs: Song[]; error: string | null }> {
@@ -388,6 +398,11 @@ export async function getTab(id: string): Promise<TabFile | null> {
   for (const s of songs) {
     const f = s.files.find((t) => t.id === id);
     if (f) return f;
+    if (s.audio && s.audio.id === id) return s.audio;
+    if (s.audios) {
+      const a = s.audios.find((t) => t.id === id);
+      if (a) return a;
+    }
   }
   return null;
 }

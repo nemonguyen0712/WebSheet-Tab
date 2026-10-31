@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AudioPlayer } from "@/components/AudioPlayer";
 import { ImageViewer } from "@/components/viewers/ImageViewer";
 import { NotationViewer } from "@/components/viewers/NotationViewer";
 import { PdfViewer } from "@/components/viewers/PdfViewer";
@@ -30,9 +31,9 @@ export default async function SongPage({ params }: Props) {
   if (!song) notFound();
 
   const current = fileParam?.[0] ? song.files.find((f) => f.id === fileParam[0]) : song.files[0];
-  if (!current) notFound();
+  if (!current && !song.audio) notFound();
   // Paying accounts only: anyone else goes to the plan page (or logs in again on this device).
-  const locked = lockedRedirect(viewer, songHref(song, current));
+  const locked = lockedRedirect(viewer, current ? songHref(song, current) : `/bai/${song.id}`);
   if (locked || !viewer) redirect(locked ?? "/dang-ky");
   const sub = songSubtitle(song);
   const labels = sheetLabels(song);
@@ -40,6 +41,7 @@ export default async function SongPage({ params }: Props) {
     song.links.video ? getLinkUrl(song.links.video) : null,
     song.links.backing ? getLinkUrl(song.links.backing) : null,
   ]);
+
 
   return (
     <main className="mx-auto max-w-5xl px-4 pb-28">
@@ -60,40 +62,58 @@ export default async function SongPage({ params }: Props) {
         {sub && <p className="mt-1 text-muted">{sub}</p>}
       </div>
 
-      <nav className="mt-5 flex flex-wrap gap-2" aria-label="Nội dung của bài">
-        {/* Sheets by part ("Tab/Sheet", "Intro", "Solo"…), without file types. */}
-        {song.files.map((f) => {
-          const active = f.id === current.id;
-          return (
-            <Link
-              key={f.id}
-              href={songHref(song, f)}
-              scroll={false}
-              aria-current={active ? "page" : undefined}
-              className={`flex h-10 max-w-full items-center gap-2 rounded-lg border px-3.5 text-sm whitespace-nowrap ${
-                active ? "border-accent bg-accent text-accent-fg font-medium" : "border-border bg-surface hover:border-accent"
-              }`}
-            >
-              <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M9 18V5l12-2v13" strokeLinejoin="round" />
-                <circle cx="6" cy="18" r="3" />
-                <circle cx="18" cy="16" r="3" />
-              </svg>
-              <span className="truncate">{labels.get(f.id)}</span>
-            </Link>
-          );
-        })}
-        <ExternalButton href={videoUrl} label="Video hướng dẫn">
-          <path d="M8 5v14l11-7z" strokeLinejoin="round" />
-        </ExternalButton>
-        <ExternalButton href={backingUrl} label="Backing track">
-          <path d="M3 14v-2a9 9 0 0 1 18 0v2" />
-          <path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z" strokeLinejoin="round" />
-        </ExternalButton>
-      </nav>
+      {song.audio && (
+        <div className="mt-4">
+          <AudioPlayer
+            url={signedFileUrl(song.audio.id, viewer)}
+            title={song.title}
+            fileName={song.audio.name}
+          />
+        </div>
+      )}
+
+      {song.files.length > 0 && (
+        <nav className="mt-5 flex flex-wrap gap-2" aria-label="Nội dung của bài">
+          {/* Sheets by part ("Tab/Sheet", "Intro", "Solo"…), without file types. */}
+          {song.files.map((f) => {
+            const active = current && f.id === current.id;
+            return (
+              <Link
+                key={f.id}
+                href={songHref(song, f)}
+                scroll={false}
+                aria-current={active ? "page" : undefined}
+                className={`flex h-10 max-w-full items-center gap-2 rounded-lg border px-3.5 text-sm whitespace-nowrap ${
+                  active ? "border-accent bg-accent text-accent-fg font-medium" : "border-border bg-surface hover:border-accent"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M9 18V5l12-2v13" strokeLinejoin="round" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" />
+                </svg>
+                <span className="truncate">{labels.get(f.id)}</span>
+              </Link>
+            );
+          })}
+          <ExternalButton href={videoUrl} label="Video hướng dẫn">
+            <path d="M8 5v14l11-7z" strokeLinejoin="round" />
+          </ExternalButton>
+          <ExternalButton href={backingUrl} label="Backing track">
+            <path d="M3 14v-2a9 9 0 0 1 18 0v2" />
+            <path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z" strokeLinejoin="round" />
+          </ExternalButton>
+        </nav>
+      )}
 
       <div className="mt-4">
-        <FullView key={current.id} tab={current} viewer={viewer} />
+        {current ? (
+          <FullView key={current.id} tab={current} viewer={viewer} />
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-surface p-8 text-center text-muted">
+            Bản nhạc (sheet/tab) đang được cập nhật. Bạn có thể nghe trước bản thu âm ở trên!
+          </div>
+        )}
       </div>
     </main>
   );
@@ -149,6 +169,8 @@ async function FullView({ tab, viewer }: { tab: TabFile; viewer: Viewer }) {
       } catch {
         return <ViewerError>Không tải được file này.</ViewerError>;
       }
+    case "audio":
+      return <AudioPlayer url={url} fileName={tab.name} />;
   }
 }
 

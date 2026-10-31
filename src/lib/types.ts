@@ -1,5 +1,4 @@
-/** The file types the site shows. Everything else in Drive (backing tracks, video clips…) is ignored. */
-export type TabKind = "pdf" | "notation" | "text" | "image";
+export type TabKind = "pdf" | "notation" | "text" | "image" | "audio";
 
 export interface TabFile {
   id: string;
@@ -32,5 +31,9 @@ export interface Song {
   files: TabFile[];
   /** "video.txt" (tutorial) and "backing.txt" (backing track): files whose text is a YouTube link. */
   links: Partial<Record<LinkKind, TabFile>>;
+  /** Audio files (mp3, wav, etc.) in the song folder for playback. */
+  audio?: TabFile | null;
+  audios?: TabFile[];
   modifiedTime: string | null;
 }
+

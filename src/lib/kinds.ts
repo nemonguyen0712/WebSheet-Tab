@@ -6,14 +6,16 @@ const EXTENSIONS: Record<TabKind, string[]> = {
   notation: ["gp", "gp3", "gp4", "gp5", "gpx", "musicxml", "mxl", "capx", "atex", "alphatex"],
   text: ["txt", "tab", "crd", "cho", "chopro", "chordpro"],
   image: ["jpg", "jpeg", "png", "webp", "gif", "bmp", "avif"],
+  audio: ["mp3", "wav", "m4a", "ogg", "aac", "flac"],
 };
 
 export const GOOGLE_DOC_MIME = "application/vnd.google-apps.document";
 
-/** null = not a sheet/tab (audio, video, documents…), so the site skips it. */
+/** null = not a sheet/tab or audio (video, documents…), so the site skips it. */
 export function detectKind(ext: string, mimeType: string): TabKind | null {
   if (mimeType === GOOGLE_DOC_MIME) return "text";
   if (mimeType.startsWith("application/vnd.google-apps.")) return null;
+  if (mimeType.startsWith("audio/")) return "audio";
   for (const [kind, exts] of Object.entries(EXTENSIONS)) {
     if (exts.includes(ext)) return kind as TabKind;
   }
@@ -22,7 +24,7 @@ export function detectKind(ext: string, mimeType: string): TabKind | null {
 }
 
 /** Order files are shown in on a song page. */
-export const KIND_ORDER: TabKind[] = ["pdf", "notation", "image", "text"];
+export const KIND_ORDER: TabKind[] = ["pdf", "notation", "image", "text", "audio"];
 
 /**
  * A link file rather than a sheet: a .txt / .url file or Google Doc named "video…" / "hướng dẫn…" (tutorial)

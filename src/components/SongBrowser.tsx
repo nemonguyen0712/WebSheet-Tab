@@ -262,11 +262,23 @@ function SongCard({ i, matchedFile, newCutoff, inColumn }: Result & { newCutoff:
       >
         <div className="flex items-start gap-2">
           <span className="line-clamp-2 flex-1 font-semibold leading-snug text-deep">{i.song.title}</span>
-          {i.modified > newCutoff && (
-            <span className="mt-0.5 shrink-0 rounded-sm border border-[#e9d2a8] bg-brass-soft px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brass">
-              Mới
-            </span>
-          )}
+          <div className="mt-0.5 flex shrink-0 items-center gap-1">
+            {i.song.audio && (
+              <span className="flex items-center gap-1 rounded-sm bg-accent/10 px-1.5 py-0.5 text-[10.5px] font-semibold text-accent" title="Có bản thu âm / beat">
+                <svg viewBox="0 0 24 24" className="size-3" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 18V5l12-2v13" strokeLinejoin="round" />
+                  <circle cx="6" cy="18" r="3" />
+                  <circle cx="18" cy="16" r="3" />
+                </svg>
+                Audio
+              </span>
+            )}
+            {i.modified > newCutoff && (
+              <span className="rounded-sm border border-[#e9d2a8] bg-brass-soft px-1.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brass">
+                Mới
+              </span>
+            )}
+          </div>
         </div>
         {sub && <div className="-mt-1 truncate text-sm text-muted">{sub}</div>}
         {matchedFile && <div className="-mt-1 truncate text-sm text-brass">↳ {matchedFile.label}</div>}
