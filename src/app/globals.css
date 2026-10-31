@@ -63,11 +63,11 @@ body {
   --header-h: 92px;
 }
 
-/* Announcement band (components/SiteNotice.tsx): two copies of the text scroll by half the track, looping. */
+/* Announcement band (components/SiteNotice.tsx): seamlessly loops by half the track. */
 .notice-track {
   display: flex;
   width: max-content;
-  animation: notice-scroll 28s linear infinite;
+  animation: notice-scroll 50s linear infinite;
 }
 .site-notice:hover .notice-track {
   animation-play-state: paused;

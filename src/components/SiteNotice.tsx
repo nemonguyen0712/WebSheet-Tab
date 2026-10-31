@@ -42,10 +42,10 @@ export function SiteNotice() {
   if (!n) return null;
   return (
     <div className="site-notice overflow-hidden bg-deep text-[15px] font-medium leading-9 text-[#f0d9a8] sm:text-base" role="note" aria-label={n.text}>
-      {/* Two copies side by side scroll by half their width, so the band loops without a gap. */}
+      {/* 6 copies (two sets of 3) scroll by half the track (-50%), seamlessly looping on any screen width without gaps */}
       <div className="notice-track" aria-hidden>
-        {[0, 1].map((copy) => (
-          <span key={copy} className="flex shrink-0 items-center gap-2.5 whitespace-nowrap pr-20">
+        {[0, 1, 2, 3, 4, 5].map((copy) => (
+          <span key={copy} className="flex shrink-0 items-center gap-2.5 whitespace-nowrap pr-16 sm:pr-20">
             <span className="rounded bg-[#c9a464] px-1.5 text-xs font-bold uppercase leading-5 tracking-wide text-[#17130c]">Thông báo</span>
             {n.text}
           </span>
