@@ -36,8 +36,8 @@ export function ToolButton({
       aria-label={label}
       title={label}
       aria-pressed={active}
-      className={`grid h-8 min-w-8 place-items-center rounded-md px-2 disabled:opacity-40 ${
-        active ? "bg-accent text-accent-fg" : "hover:bg-surface-2"
+      className={`grid h-8 min-w-8 place-items-center rounded-md px-2 cursor-pointer transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+        active ? "bg-accent text-accent-fg font-medium" : "hover:bg-surface-2"
       }`}
     >
       {children}

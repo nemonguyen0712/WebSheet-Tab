@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { categoryRank } from "@/lib/categories";
 import { fold, sheetLabels, songSubtitle } from "@/lib/kinds";
@@ -252,13 +253,18 @@ function columnsOf(results: Result[], names: string[]): [string, Result[]][] {
 }
 
 function SongCard({ i, matchedFile, newCutoff, inColumn }: Result & { newCutoff: number; inColumn?: boolean }) {
+  const router = useRouter();
   // Inside a Solo / Melody column or page the category is already the title.
   const sub = songSubtitle(inColumn ? { ...i.song, category: i.song.category.slice(1) } : i.song);
+  const href = songHref(i.song, matchedFile?.file);
+
   return (
     <li>
       <Link
-        href={songHref(i.song, matchedFile?.file)}
-        className="flex h-full flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition hover:border-brass active:scale-[0.99]"
+        href={href}
+        prefetch={true}
+        onPointerDown={() => router.prefetch(href)}
+        className="flex h-full flex-col gap-2 rounded-lg border border-border bg-surface p-4 transition hover:border-brass active:scale-[0.985]"
       >
         <div className="flex items-start gap-2">
           <span className="line-clamp-2 flex-1 font-semibold leading-snug text-deep">{i.song.title}</span>

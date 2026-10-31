@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Bitter, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
@@ -5,6 +6,7 @@ import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
+import { NavigationProgress } from "@/components/NavigationProgress";
 import { SiteNotice, SiteNoticeDialog } from "@/components/SiteNotice";
 import { SITE_NAME, zalo } from "@/lib/site";
 import "./globals.css";
@@ -43,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi" className={`${beVietnam.variable} ${bitter.variable} ${jetbrains.variable}`}>
       <body className="relative isolate flex min-h-dvh flex-col font-sans antialiased">
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <Ambient />
         <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/75 shadow-[0_1px_0_rgb(255_255_255/0.5)] backdrop-blur-md">
           <SiteNotice />
