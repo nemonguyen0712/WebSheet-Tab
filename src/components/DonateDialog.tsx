@@ -3,8 +3,8 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-/** Pages where a second QR would be confused with paying for a plan, and the one-screen login page (no room). */
-const HIDDEN_ON = [/^\/dang-ky/, /^\/thanh-toan/, /^\/dang-nhap/];
+/** Pages where a second QR would be confused with paying for a plan, the one-screen login page (no room) and /admin. */
+const HIDDEN_ON = [/^\/dang-ky/, /^\/thanh-toan/, /^\/dang-nhap/, /^\/admin/];
 const HASH = "#ung-ho";
 
 function vnd(n: number) {
