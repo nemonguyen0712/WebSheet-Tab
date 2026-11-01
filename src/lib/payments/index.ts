@@ -201,8 +201,9 @@ export function bankTransferNote(order: Pick<Order, "order_code" | "provider">, 
  * VietQR as a "bank card" style image (VietQR, napas 247 and bank logos, account holder, account
  * number) whose QR already contains the amount and the transfer note, so customers just scan and confirm.
  */
-export function bankQrUrl(amount: number, note: string) {
+export function bankQrUrl(amount: number | null, note: string) {
   const { qrBankId, number, name } = bankAccount();
-  const params = new URLSearchParams({ amount: String(amount), addInfo: note, accountName: name });
+  // No amount: the payer types one in their bank app (donations "tuỳ tâm").
+  const params = new URLSearchParams({ ...(amount ? { amount: String(amount) } : {}), addInfo: note, accountName: name });
   return `https://img.vietqr.io/image/${encodeURIComponent(qrBankId)}-${encodeURIComponent(number)}-print.png?${params}`;
 }

@@ -4,6 +4,7 @@ import { Be_Vietnam_Pro, Bitter, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import { AccountNav } from "@/components/AccountNav";
 import { ContentGuard } from "@/components/ContentGuard";
+import { Donate } from "@/components/Donate";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
 import { NavigationProgress } from "@/components/NavigationProgress";
@@ -84,10 +85,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href={support.url} target="_blank" rel="noreferrer" className="font-medium text-[#e9d2a8] underline underline-offset-4">
               Hỗ trợ: nhắn Zalo {support.display}
             </a>
+            <a href="#ung-ho" className="font-medium text-[#e9d2a8] underline underline-offset-4">
+              Ủng hộ Oliu
+            </a>
           </div>
         </footer>
         <ContentGuard />
         <SiteNoticeDialog />
+        <Donate />
       </body>
     </html>
   );
