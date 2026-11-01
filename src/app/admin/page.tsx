@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SyncDriveButton } from "@/components/SyncDriveButton";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
 import { folderIdFrom, forgetDriveFolders, listDriveFolders, sectionFrom } from "@/lib/drive-folders";
-import { ORDER_TTL_MINUTES, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
+import { ORDER_TTL_MINUTES, bankTransferNote, getOrder, isExpired, markPaid, purgeStaleOrders } from "@/lib/payments";
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { REQUEST_STATUS_LABEL, SONG_REQUESTS_PER_MONTH, type SongRequest, dayStartVN } from "@/lib/requests";
 import { checkDriveFolder, clearSongsCache, listSongs, serviceAccountEmail } from "@/lib/source";
@@ -39,6 +40,25 @@ async function confirmOrder(formData: FormData) {
   const order = await getOrder(Number(formData.get("order")));
   if (order?.status === "pending") await markPaid(order.order_code, order.amount, `manual:${viewer.username}`);
   revalidatePath("/admin");
+}
+
+/** Takes back an order confirmed by mistake: it becomes cancelled and its days come off the customer's plan. */
+async function undoPaid(formData: FormData) {
+  "use server";
+  const viewer = await requireAdmin();
+  const order = await getOrder(Number(formData.get("order")));
+  if (order?.status !== "paid") redirect("/admin#don");
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("orders")
+    .update({ status: "cancelled", provider_ref: `undone:${viewer.username}` })
+    .eq("order_code", order.order_code)
+    .eq("status", "paid")
+    .select("order_code");
+  // Only if this request is the one that flipped it, so a double click can't take the days off twice.
+  if (data?.length) await admin.rpc("extend_subscription", { p_user: order.user_id, p_days: -order.days });
+  revalidatePath("/admin");
+  redirect("/admin#don");
 }
 
 /** For customers who forgot their password: set a new one and tell them over Zalo/phone. */
@@ -144,7 +164,7 @@ export default async function AdminPage({
   // The same search box filters orders by phone, which is the transfer note in manual mode.
   let ordersQuery = admin
     .from("orders")
-    .select("order_code, plan, amount, status, created_at, paid_at, profiles!inner(username, phone)")
+    .select("order_code, plan, amount, status, provider, created_at, paid_at, profiles!inner(username, phone)")
     .order("created_at", { ascending: false })
     .limit(30);
   if (digits.length >= 3) ordersQuery = ordersQuery.like("profiles.phone", `%${digits}%`);
@@ -491,10 +511,11 @@ export default async function AdminPage({
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-5">
-        <h2 className="font-semibold">Đơn gần đây</h2>
+        <h2 id="don" className="scroll-mt-20 font-semibold">Đơn gần đây</h2>
         <p className="mt-1 text-sm text-muted">
           Chuyển khoản tay: nội dung chuyển khoản là số điện thoại của khách. Thấy trong app ngân hàng có khoản đúng số tiền, đúng
-          số điện thoại, sau giờ tạo đơn thì bấm “Đã nhận tiền”, gói được cộng ngay. Đơn chưa trả hết hạn sau {ORDER_TTL_MINUTES} phút
+          số điện thoại, sau giờ tạo đơn thì bấm “Xác nhận đã nhận tiền”, gói được cộng ngay. Khách bấm thanh toán chỉ tạo đơn
+          “Chưa nhận tiền”, không có nghĩa là đã chuyển: luôn đối chiếu trong app ngân hàng trước. Lỡ xác nhận nhầm thì bấm “Hoàn tác”. Đơn chưa trả hết hạn sau {ORDER_TTL_MINUTES} phút
           (khách không quét được mã nữa) nhưng vẫn xác nhận được trong 24 giờ, sau đó tự xoá.
         </p>
         <div className="mt-3 overflow-x-auto">
@@ -527,10 +548,33 @@ export default async function AdminPage({
                     </td>
                     <td className="py-2 text-right">
                       {o.status === "pending" ? (
-                        <form action={confirmOrder} className="inline-flex items-center gap-2">
+                        // Unpaid: the badge says so outright; confirming asks first, since it adds the days at once.
+                        <form action={confirmOrder} className="inline-flex flex-col items-end gap-1.5">
                           <input type="hidden" name="order" value={o.order_code} />
-                          <StatusBadge status={isExpired(o) ? "expired" : o.status} />
-                          <button className="h-8 rounded-md border border-border px-2 text-xs hover:border-accent">Đã nhận tiền</button>
+                          <span className="rounded-md bg-[#fde3c8] px-1.5 py-0.5 text-xs font-bold uppercase text-[#9a4a0b]">
+                            Chưa nhận tiền{isExpired(o) ? " · hết hạn QR" : ""}
+                          </span>
+                          <ConfirmButton
+                            message={
+                              `Mở app Techcombank kiểm tra trước: đã có khoản ${formatVnd(o.amount)}, ` +
+                              `nội dung “${buyer ? bankTransferNote(o, buyer.phone) : ""}”, chuyển sau ${formatDateTime(o.created_at)} chưa?\n\n` +
+                              `OK = xác nhận đã nhận tiền và cộng ${getPlan(o.plan)?.label ?? o.plan} cho ${buyer?.username ?? "khách"}.`
+                            }
+                            className="h-8 rounded-md border border-accent px-2 text-xs font-medium text-accent hover:bg-accent hover:text-accent-fg"
+                          >
+                            Xác nhận đã nhận tiền
+                          </ConfirmButton>
+                        </form>
+                      ) : o.status === "paid" ? (
+                        <form action={undoPaid} className="inline-flex flex-col items-end gap-1.5">
+                          <input type="hidden" name="order" value={o.order_code} />
+                          <StatusBadge status="paid" />
+                          <ConfirmButton
+                            message={`Hoàn tác đơn #${o.order_code} của ${buyer?.username ?? "khách"}? Đơn bị huỷ và trừ lại ${getPlan(o.plan)?.label ?? o.plan} đã cộng (chỉ làm khi lỡ xác nhận nhầm, khách chưa chuyển tiền).`}
+                            className="text-xs text-muted underline underline-offset-2 hover:text-[#b33a28]"
+                          >
+                            Hoàn tác
+                          </ConfirmButton>
                         </form>
                       ) : (
                         <StatusBadge status={o.status} />
