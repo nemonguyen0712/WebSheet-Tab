@@ -100,7 +100,7 @@ export function DonateDialog({
               key={option.qr}
               src={option.qr}
               alt={`Mã VietQR ủng hộ Oliu${option.amount ? ` ${vnd(option.amount)}` : ""}, nội dung ${note}`}
-              className="mx-auto mt-3 w-full max-w-[220px] rounded-lg bg-white p-1.5"
+              className="mx-auto mt-3 w-full max-w-[200px] rounded-lg bg-white p-1.5"
             />
             <dl className="mt-3 space-y-1 text-left text-xs">
               <Row label="Ngân hàng" value={bank.bank} />
@@ -109,6 +109,13 @@ export function DonateDialog({
               <Row label="Số tiền" value={option.amount ? vnd(option.amount) : "Tuỳ tâm (nhập trong app)"} />
               <Row label="Nội dung" value={note} />
             </dl>
+
+            <div className="mt-3 rounded-xl border border-[#c9a464]/30 bg-[#c9a464]/10 px-3 py-2.5 text-sm leading-relaxed text-[#f0d9a8]">
+              <p className="font-semibold">💛 Oliu xin chân thành cảm ơn bạn!</p>
+              <p className="mt-0.5 text-xs text-[#d8c9a6]">
+                Mỗi khoản ủng hộ, dù nhỏ, đều giúp Oliu duy trì máy chủ và ra thêm tab/sheet mới mỗi tuần. Chúc bạn tập đàn thật vui!
+              </p>
+            </div>
 
             <button
               ref={closeButton}
