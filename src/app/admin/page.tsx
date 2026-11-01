@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { MoneySection } from "./MoneySection";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SyncDriveButton } from "@/components/SyncDriveButton";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
@@ -141,13 +142,13 @@ const FOLDER_MESSAGES: Record<string, string> = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; matkhau?: string; thumuc?: string; so?: string }>;
+  searchParams: Promise<{ q?: string; matkhau?: string; thumuc?: string; so?: string; thang?: string; tien?: string }>;
 }) {
   await requireAdmin();
   if (!supabaseConfigured()) {
     return <main className="mx-auto max-w-5xl px-4 py-8 text-muted">Chưa cấu hình Supabase.</main>;
   }
-  const { q = "", matkhau, thumuc, so } = await searchParams;
+  const { q = "", matkhau, thumuc, so, thang, tien } = await searchParams;
   const admin = createAdminClient();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -209,6 +210,8 @@ export default async function AdminPage({
         <Stat label="Doanh thu tháng này" value={formatVnd(revenue)} />
         <Stat label="Đơn đã thanh toán tháng này" value={String(monthOrders?.length ?? 0)} />
       </div>
+
+      <MoneySection month={thang} message={tien} />
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Lưu lượng</h2>
