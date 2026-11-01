@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { DONATE_NOTE } from "@/components/Donate";
-import { monthRangeVN } from "@/lib/money";
+import { monthRangeVN, monthsSince } from "@/lib/money";
 import { formatDateTime, formatVnd } from "@/lib/plans";
 import { createAdminClient } from "@/lib/supabase/server";
+import { MonthPicker } from "./MonthPicker";
 import { addDonation, removeDonation } from "./money-actions";
 
 const MESSAGES: Record<string, string> = {
@@ -30,7 +31,7 @@ interface Entry {
 export async function MoneySection({ month, message }: { month?: string; message?: string }) {
   const range = monthRangeVN(month);
   const admin = createAdminClient();
-  const [orders, donations] = await Promise.all([
+  const [orders, donations, firstOrder, firstDonation] = await Promise.all([
     admin
       .from("orders")
       .select("order_code, amount, paid_at, profiles(username)")
@@ -44,8 +45,14 @@ export async function MoneySection({ month, message }: { month?: string; message
       .gte("received_at", range.start)
       .lt("received_at", range.end)
       .order("received_at", { ascending: false }),
+    // The earliest money in, so the month list starts there.
+    admin.from("orders").select("paid_at").eq("status", "paid").order("paid_at").limit(1).maybeSingle(),
+    admin.from("donations").select("received_at").order("received_at").limit(1).maybeSingle(),
   ]);
   const tableMissing = Boolean(donations.error);
+  const earliest = [firstOrder.data?.paid_at, firstDonation.data?.received_at].filter(Boolean).sort()[0] ?? null;
+  const months = monthsSince(earliest);
+  if (!months.includes(range.key)) months.push(range.key);
 
   const entries: Entry[] = [
     ...(orders.data ?? []).map((o) => ({
@@ -74,16 +81,14 @@ export async function MoneySection({ month, message }: { month?: string; message
     <section id="tien" className="scroll-mt-20 rounded-2xl border border-border bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-semibold">Quản lý tiền · tháng {range.label}</h2>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link href={`/admin?thang=${range.prev}#tien`} className="rounded-md border border-border px-2 py-1 hover:border-accent">
-            ← Tháng trước
-          </Link>
+        <div className="flex items-center gap-2">
+          <MonthPicker months={months} value={range.key} />
           {!range.isCurrent && (
-            <Link href={`/admin?thang=${range.next}#tien`} className="rounded-md border border-border px-2 py-1 hover:border-accent">
-              Tháng sau →
+            <Link href="/admin#tien" scroll={false} className="h-9 rounded-lg border border-border px-3 text-sm leading-9 hover:border-accent">
+              Tháng này
             </Link>
           )}
-        </nav>
+        </div>
       </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">

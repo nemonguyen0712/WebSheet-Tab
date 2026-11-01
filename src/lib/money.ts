@@ -2,7 +2,7 @@
 
 const VN = 7 * 3_600_000;
 
-/** A month ("2026-11", default: this month in Vietnam) as an ISO time range, with its neighbours for paging. */
+/** A month ("2026-11", default: this month in Vietnam) as an ISO time range. */
 export function monthRangeVN(key?: string) {
   const now = new Date(Date.now() + VN);
   const m = /^(\d{4})-(\d{2})$/.exec(key ?? "");
@@ -17,10 +17,24 @@ export function monthRangeVN(key?: string) {
     label: `${String(month + 1).padStart(2, "0")}/${year}`,
     start: new Date(Date.UTC(year, month, 1) - VN).toISOString(),
     end: new Date(Date.UTC(year, month + 1, 1) - VN).toISOString(),
-    prev: keyOf(year, month - 1),
-    next: keyOf(year, month + 1),
     isCurrent: year === now.getUTCFullYear() && month === now.getUTCMonth(),
   };
+}
+
+/** Every month from `firstIso`'s (Vietnam time) up to this one, newest first, as "2026-11". */
+export function monthsSince(firstIso: string | null): string[] {
+  const now = new Date(Date.now() + VN);
+  const first = firstIso ? new Date(Date.parse(firstIso) + VN) : now;
+  const out: string[] = [];
+  for (let y = now.getUTCFullYear(), m = now.getUTCMonth(); ; m--) {
+    if (m < 0) {
+      m = 11;
+      y--;
+    }
+    out.push(`${y}-${String(m + 1).padStart(2, "0")}`);
+    if (y < first.getUTCFullYear() || (y === first.getUTCFullYear() && m <= first.getUTCMonth()) || out.length >= 240) break;
+  }
+  return out;
 }
 
 /** "50000", "50.000", "50,000đ", "50k" → 50000; null if it isn't a positive amount. */
