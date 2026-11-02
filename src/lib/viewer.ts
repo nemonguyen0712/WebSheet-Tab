@@ -27,13 +27,22 @@ export interface Viewer {
   isAdmin: boolean;
 }
 
-function isAdminPhone(phone: string) {
+/** The admins set on the server (ADMIN_PHONES), normalized; others are granted in /admin (profiles.is_admin). */
+export function envAdminPhones(): string[] {
   // Tolerates quotes pasted along with the value (deploy.env writes ADMIN_PHONES='0901…').
   return (process.env.ADMIN_PHONES ?? "")
     .replace(/["']/g, "")
     .split(/[,;]/)
     .map((p) => normalizePhone(p))
-    .includes(phone);
+    .filter((p): p is string => Boolean(p));
+}
+
+/** The profile, with is_admin when that column exists (supabase/migrations/007); without it until then. */
+async function loadProfile(admin: ReturnType<typeof createAdminClient>, userId: string) {
+  const withAdmin = await admin.from("profiles").select("username, phone, paid_until, is_admin").eq("id", userId).maybeSingle();
+  if (!withAdmin.error) return withAdmin.data as { username: string; phone: string; paid_until: string | null; is_admin: boolean } | null;
+  const plain = await admin.from("profiles").select("username, phone, paid_until").eq("id", userId).maybeSingle();
+  return plain.data ? { ...plain.data, is_admin: false } : null;
 }
 
 /**
@@ -85,8 +94,8 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const admin = createAdminClient();
   const deviceId = cookieStore.get(DEVICE_COOKIE)?.value;
-  const [{ data: profile }, { data: device }] = await Promise.all([
-    admin.from("profiles").select("username, phone, paid_until").eq("id", userId).maybeSingle(),
+  const [profile, { data: device }] = await Promise.all([
+    loadProfile(admin, userId),
     deviceId
       ? admin.from("devices").select("id, last_seen").eq("id", deviceId).eq("user_id", userId).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -101,7 +110,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   if (!profile) return null;
   const paidUntil: string | null = profile.paid_until;
   const deviceOk = Boolean(device);
-  const isAdmin = isAdminPhone(profile.phone);
+  const isAdmin = envAdminPhones().includes(profile.phone) || profile.is_admin === true;
   return {
     id: userId,
     username: profile.username,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { AccountGrantSection } from "./AccountGrantSection";
 import { MoneySection } from "./MoneySection";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SyncDriveButton } from "@/components/SyncDriveButton";
@@ -142,13 +143,24 @@ const FOLDER_MESSAGES: Record<string, string> = {
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; matkhau?: string; thumuc?: string; so?: string; thang?: string; tien?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    matkhau?: string;
+    thumuc?: string;
+    so?: string;
+    thang?: string;
+    tien?: string;
+    captk?: string;
+    tk?: string;
+    ngay?: string;
+    msg?: string;
+  }>;
 }) {
-  await requireAdmin();
+  const viewer = await requireAdmin();
   if (!supabaseConfigured()) {
     return <main className="mx-auto max-w-5xl px-4 py-8 text-muted">Chưa cấu hình Supabase.</main>;
   }
-  const { q = "", matkhau, thumuc, so, thang, tien } = await searchParams;
+  const { q = "", matkhau, thumuc, so, thang, tien, captk, tk, ngay, msg } = await searchParams;
   const admin = createAdminClient();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -212,6 +224,8 @@ export default async function AdminPage({
       </div>
 
       <MoneySection month={thang} message={tien} />
+
+      <AccountGrantSection status={captk} tk={tk} days={ngay} msg={msg} viewerId={viewer.id} />
 
       <section className="rounded-2xl border border-border bg-surface p-5">
         <h2 className="font-semibold">Lưu lượng</h2>
