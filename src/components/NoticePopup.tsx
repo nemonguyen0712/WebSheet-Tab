@@ -2,11 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 
+export interface NoticeItem {
+  title: string;
+  content: string;
+}
+
 /**
  * The announcement as a dialog over the page when the site is opened: once per browser session (moving between
  * pages doesn't bring it back), and again whenever the text changes. Without session storage it shows on each load.
  */
-export function NoticePopup({ text, lines }: { text: string; lines: [string, string][] | null }) {
+export function NoticePopup({
+  text,
+  items,
+}: {
+  text: string;
+  items?: NoticeItem[] | null;
+}) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const key = `oliu-notice:${text}`;
@@ -55,18 +66,21 @@ export function NoticePopup({ text, lines }: { text: string; lines: [string, str
         <h2 id="notice-title" className="mt-3 font-display text-2xl font-bold text-[#e2c58f]">
           Thông báo
         </h2>
-        {lines ? (
+        {items && items.length > 0 ? (
           <>
-            <p className="mt-2 text-lg leading-snug">Các bài hát đang được kiểm tra lại.</p>
-            <dl className="mt-4 grid gap-2 text-left">
-              {lines.map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between gap-3 rounded-xl bg-black/25 px-4 py-3">
-                  <dt className="text-[#b9aa8a]">{label}</dt>
-                  <dd className="text-lg font-bold text-[#e2c58f]">{value}</dd>
+            <div className="mt-4 space-y-2.5 text-left">
+              {items.map((item) => (
+                <div key={item.title} className="rounded-xl bg-black/25 px-4 py-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[#b9aa8a]">
+                    {item.title}
+                  </div>
+                  <div className="mt-1 text-[15px] font-medium leading-relaxed text-[#f1e6cc]">
+                    {item.content}
+                  </div>
                 </div>
               ))}
-            </dl>
-            <p className="mt-4 text-sm text-[#b9aa8a]">Tab/sheet sẽ có trong khoảng thời gian trên. Cảm ơn bạn đã chờ!</p>
+            </div>
+            <p className="mt-4 text-sm text-[#b9aa8a]">Cảm ơn bạn đã chờ!</p>
           </>
         ) : (
           <p className="mt-3 whitespace-pre-line text-lg leading-snug">{text}</p>

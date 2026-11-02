@@ -1,4 +1,4 @@
-import { NoticePopup } from "./NoticePopup";
+import { NoticeItem, NoticePopup } from "./NoticePopup";
 
 /**
  * The site's announcement: a dialog when the site is opened (NoticePopup) and a scrolling band at the top of
@@ -7,7 +7,18 @@ import { NoticePopup } from "./NoticePopup";
  * for this week's Saturday and Sunday ("31/10").
  */
 const DEFAULT_NOTICE =
-  "Các bài hát đang được kiểm tra lại. Tab/sheet sẽ có sớm nhất Thứ 7 ({thu7}), trễ nhất Chủ nhật ({cn}). Cảm ơn bạn đã chờ!";
+  "Các bài hát đang được kiểm tra lại và cập nhật mỗi ngày. Backing track theo karaoke trên YouTube, các bạn lên YouTube lấy backing track giúp mình ạ. Cảm ơn bạn đã chờ!";
+
+const DEFAULT_ITEMS: NoticeItem[] = [
+  {
+    title: "Cập nhật bài hát",
+    content: "Các bài hát đang được kiểm tra lại và cập nhật mỗi ngày.",
+  },
+  {
+    title: "Backing track",
+    content: "Backing track theo karaoke trên YouTube, các bạn lên YouTube lấy backing track giúp mình ạ.",
+  },
+];
 
 /** This week's Saturday and Sunday in Vietnam time (the week runs Monday → Sunday), as "dd/mm". */
 function thisWeekend(now = Date.now()) {
@@ -23,17 +34,17 @@ function notice() {
   const setting = process.env.SITE_NOTICE?.trim();
   if (setting === "off") return null;
   const { saturday, sunday } = thisWeekend();
+  const text = (setting || DEFAULT_NOTICE).replaceAll("{thu7}", saturday).replaceAll("{cn}", sunday);
   return {
-    text: (setting || DEFAULT_NOTICE).replaceAll("{thu7}", saturday).replaceAll("{cn}", sunday),
-    /** The default notice is laid out as two date rows in the dialog; a custom one is shown as written. */
-    lines: setting ? null : ([["Sớm nhất", `Thứ 7, ${saturday}`], ["Trễ nhất", `Chủ nhật, ${sunday}`]] as [string, string][]),
+    text,
+    items: setting ? null : DEFAULT_ITEMS,
   };
 }
 
 /** Shown once when the site is opened (see NoticePopup). */
 export function SiteNoticeDialog() {
   const n = notice();
-  return n ? <NoticePopup text={n.text} lines={n.lines} /> : null;
+  return n ? <NoticePopup text={n.text} items={n.items} /> : null;
 }
 
 /** The scrolling band in the header. */
