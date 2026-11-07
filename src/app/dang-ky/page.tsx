@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getPendingOrder, paymentProvider, startCheckout } from "@/lib/payments";
 import { PLANS, formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { getViewer } from "@/lib/viewer";
-import { PauseNotice } from "@/components/PaymentPauseBanner";
+import { PauseNotice } from "@/components/PauseNotice";
 import { getPaymentPause } from "@/lib/payment-pause";
 
 export const metadata: Metadata = { title: "Đăng ký" };
@@ -94,7 +94,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
           className="mt-6 h-12 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pause
-            ? "Tạm ngưng thanh toán"
+            ? "Tạm dừng nhận thanh toán"
             : !viewer
               ? "Đăng nhập để mua"
               : pending

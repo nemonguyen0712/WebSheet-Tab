@@ -1,4 +1,5 @@
-import { NoticeItem, NoticePopup } from "./NoticePopup";
+import { getPaymentPause } from "@/lib/payment-pause";
+import { type NoticeItem, NoticePopup } from "./NoticePopup";
 
 /**
  * The site's announcement: a dialog when the site is opened (NoticePopup) and a scrolling band at the top of
@@ -30,26 +31,31 @@ function thisWeekend(now = Date.now()) {
   return { saturday: ddmm(saturday), sunday: ddmm(sunday) };
 }
 
-function notice() {
+/**
+ * The notice to show: SITE_NOTICE (or the default), and first of all the payment pause when it's switched on in
+ * /admin, so that news reaches customers as a notice rather than as an error banner.
+ */
+async function notice() {
   const setting = process.env.SITE_NOTICE?.trim();
-  if (setting === "off") return null;
+  const pause = await getPaymentPause();
   const { saturday, sunday } = thisWeekend();
-  const text = (setting || DEFAULT_NOTICE).replaceAll("{thu7}", saturday).replaceAll("{cn}", sunday);
-  return {
-    text,
-    items: setting ? null : DEFAULT_ITEMS,
-  };
+  const base = setting === "off" ? null : (setting || DEFAULT_NOTICE).replaceAll("{thu7}", saturday).replaceAll("{cn}", sunday);
+  if (!pause) return base ? { text: base, items: setting ? null : DEFAULT_ITEMS } : null;
+
+  const pauseItem: NoticeItem = { title: "Tạm dừng nhận thanh toán", content: pause.message };
+  const others: NoticeItem[] = !base ? [] : setting ? [{ title: "Thông báo", content: base }] : DEFAULT_ITEMS;
+  return { text: [pause.message, base].filter(Boolean).join("  •  "), items: [pauseItem, ...others] };
 }
 
-/** Shown once when the site is opened (see NoticePopup). */
-export function SiteNoticeDialog() {
-  const n = notice();
+/** Shown once when the site is opened (see NoticePopup); again whenever its text changes, e.g. a pause starts. */
+export async function SiteNoticeDialog() {
+  const n = await notice();
   return n ? <NoticePopup text={n.text} items={n.items} /> : null;
 }
 
 /** The scrolling band in the header. */
-export function SiteNotice() {
-  const n = notice();
+export async function SiteNotice() {
+  const n = await notice();
   if (!n) return null;
   return (
     <div className="site-notice overflow-hidden bg-deep text-[15px] font-medium leading-9 text-[#f0d9a8] sm:text-base" role="note" aria-label={n.text}>

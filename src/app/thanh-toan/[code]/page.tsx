@@ -5,7 +5,7 @@ import { ORDER_TTL_MINUTES, bankAccount, bankQrUrl, bankTransferNote, getOrder, 
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { zalo } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
-import { PauseNotice } from "@/components/PaymentPauseBanner";
+import { PauseNotice } from "@/components/PauseNotice";
 import { getPaymentPause } from "@/lib/payment-pause";
 import { ExpiryCountdown, OrderPoller } from "./OrderPoller";
 

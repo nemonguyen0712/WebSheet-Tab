@@ -82,8 +82,8 @@ export function DonateDialog({
             <p className="mt-1 text-xs text-[#b9aa8a]">Cảm ơn bạn đã tiếp thêm động lực để Oliu soạn thêm nhiều tab/sheet!</p>
 
             {pauseMessage && (
-              <p role="alert" className="mt-3 rounded-lg border border-[#e3a59d] bg-[#fdecea] px-3 py-2 text-left text-xs text-[#7a2419]">
-                <b>Tạm ngưng nhận chuyển khoản.</b> {pauseMessage}
+              <p role="status" className="mt-3 rounded-lg border border-[#c9a464]/50 bg-[#c9a464]/15 px-3 py-2 text-left text-xs text-[#f0d9a8]">
+                <b>Tạm dừng nhận thanh toán.</b> {pauseMessage}
               </p>
             )}
             <div className="mt-3 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Số tiền">

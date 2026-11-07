@@ -45,8 +45,8 @@ export async function PauseSection({ status }: { status?: string }) {
           <>
             <input type="hidden" name="on" value="1" />
             <p className="text-sm text-muted">
-              Khi ngân hàng lỗi: bật lên để mọi trang hiện cảnh báo đỏ, nút mua gói bị khoá, mã QR thanh toán và ủng hộ báo khách chưa
-              nên chuyển khoản. Gói khách đã mua vẫn dùng bình thường.
+              Khi ngân hàng lỗi: bật lên để thông báo này đứng đầu dải thông báo và bảng thông báo khi mở web, nút mua gói bị khoá, mã
+              QR thanh toán và ủng hộ báo khách chưa nên chuyển khoản. Gói khách đã mua vẫn dùng bình thường.
             </p>
             <textarea
               name="message"

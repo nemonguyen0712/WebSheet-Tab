@@ -1,7 +1,7 @@
 /**
- * "Ngân hàng đang lỗi": a switch in /admin that pauses payments while the bank has trouble. When on, every page
- * shows a warning, the plan page can't start a checkout, and the payment and donation QRs say not to transfer
- * now. Kept in Cloudflare KV (binding CACHE), so it needs no database change; KV can take up to about a minute
+ * "Ngân hàng đang lỗi": a switch in /admin that pauses payments while the bank has trouble. When on, its message
+ * leads the site notice (band and dialog), the plan page can't start a checkout, and the payment and donation
+ * QRs say not to transfer now. Kept in Cloudflare KV (binding CACHE), so it needs no database change; KV can take up to about a minute
  * to reach every data centre, and each server process rereads it at most every PAUSE_TTL_MS.
  */
 

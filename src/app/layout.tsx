@@ -7,7 +7,6 @@ import { ContentGuard } from "@/components/ContentGuard";
 import { Donate } from "@/components/Donate";
 import { Ambient } from "@/components/Ambient";
 import { LogoMark } from "@/components/Logo";
-import { PaymentPauseBanner } from "@/components/PaymentPauseBanner";
 import { NavigationProgress } from "@/components/NavigationProgress";
 import { SiteNotice, SiteNoticeDialog } from "@/components/SiteNotice";
 import { SITE_NAME, zalo } from "@/lib/site";
@@ -75,10 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AccountNav />
           </div>
         </header>
-        <div className="flex-1">
-          <PaymentPauseBanner />
-          {children}
-        </div>
+        <div className="flex-1">{children}</div>
         <footer className="bg-deep px-4 py-8 text-sm text-[#b9c7bc]">
           <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 text-center">
             <div className="flex items-center gap-2">
