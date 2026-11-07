@@ -15,7 +15,10 @@ export function DonateDialog({
   note,
   bank,
   options,
+  pauseMessage,
 }: {
+  /** Set while payments are paused (bank trouble): the dialog says not to transfer now. */
+  pauseMessage: string | null;
   note: string;
   bank: { bank: string; number: string; name: string };
   options: { amount: number | null; qr: string }[];
@@ -78,6 +81,11 @@ export function DonateDialog({
             </h2>
             <p className="mt-1 text-xs text-[#b9aa8a]">Cảm ơn bạn đã tiếp thêm động lực để Oliu soạn thêm nhiều tab/sheet!</p>
 
+            {pauseMessage && (
+              <p role="alert" className="mt-3 rounded-lg border border-[#e3a59d] bg-[#fdecea] px-3 py-2 text-left text-xs text-[#7a2419]">
+                <b>Tạm ngưng nhận chuyển khoản.</b> {pauseMessage}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Số tiền">
               {options.map((o, i) => (
                 <button

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { getPendingOrder, paymentProvider, startCheckout } from "@/lib/payments";
 import { PLANS, formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { getViewer } from "@/lib/viewer";
+import { PauseNotice } from "@/components/PaymentPauseBanner";
+import { getPaymentPause } from "@/lib/payment-pause";
 
 export const metadata: Metadata = { title: "Đăng ký" };
 
@@ -13,6 +15,8 @@ async function checkout(formData: FormData) {
   const viewer = await getViewer();
   if (!viewer) redirect("/dang-nhap?next=/dang-ky");
   if (!plan) redirect("/dang-ky");
+  // Bank trouble switched on in /admin: no new orders until it's off.
+  if (await getPaymentPause()) redirect("/dang-ky");
   let url: string;
   try {
     url = await startCheckout(viewer, plan);
@@ -27,7 +31,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
   const { loi, khoa } = await searchParams;
   const viewer = await getViewer();
   const plan = PLANS[0];
-  const pending = viewer ? await getPendingOrder(viewer.id) : null;
+  const [pending, pause] = await Promise.all([viewer ? getPendingOrder(viewer.id) : null, getPaymentPause()]);
 
   return (
     <main className="mx-auto max-w-md px-4 py-10">
@@ -83,8 +87,21 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
           <li>✓ Dùng trên 1 thiết bị (điện thoại, máy tính bảng hoặc máy tính)</li>
           <li>✓ Không tự gia hạn — hết hạn thì mua tiếp khi cần</li>
         </ul>
-        <button type="submit" className="mt-6 h-12 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90">
-          {!viewer ? "Đăng nhập để mua" : pending ? "Tiếp tục thanh toán" : viewer.active ? "Gia hạn bằng VietQR" : "Thanh toán bằng VietQR"}
+        {pause && <PauseNotice message={pause.message} className="mt-6 text-left" />}
+        <button
+          type="submit"
+          disabled={Boolean(pause)}
+          className="mt-6 h-12 w-full rounded-xl bg-accent font-medium text-accent-fg hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pause
+            ? "Tạm ngưng thanh toán"
+            : !viewer
+              ? "Đăng nhập để mua"
+              : pending
+                ? "Tiếp tục thanh toán"
+                : viewer.active
+                  ? "Gia hạn bằng VietQR"
+                  : "Thanh toán bằng VietQR"}
         </button>
         <p className="mt-3 text-xs text-muted">
           {paymentProvider() === "manual"

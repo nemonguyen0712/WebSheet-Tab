@@ -5,6 +5,8 @@ import { ORDER_TTL_MINUTES, bankAccount, bankQrUrl, bankTransferNote, getOrder, 
 import { formatDate, formatDateTime, formatVnd, getPlan } from "@/lib/plans";
 import { zalo } from "@/lib/site";
 import { getViewer } from "@/lib/viewer";
+import { PauseNotice } from "@/components/PaymentPauseBanner";
+import { getPaymentPause } from "@/lib/payment-pause";
 import { ExpiryCountdown, OrderPoller } from "./OrderPoller";
 
 export const metadata: Metadata = { title: "Thanh toán" };
@@ -18,7 +20,7 @@ export default async function PaymentPage({
 }) {
   const { code } = await params;
   const { huy } = await searchParams;
-  const viewer = await getViewer();
+  const [viewer, pause] = await Promise.all([getViewer(), getPaymentPause()]);
   if (!viewer) redirect(`/dang-nhap?next=/thanh-toan/${code}`);
 
   const found = await getOrder(Number(code));
@@ -87,6 +89,12 @@ export default async function PaymentPage({
 
         {order.status === "pending" && !expired && !huy && (
           <>
+            {pause && (
+              <PauseNotice
+                message={`${pause.message} Nếu bạn đã chuyển khoản rồi thì đừng lo: nhắn Zalo cho mình để được kích hoạt.`}
+                className="mt-4 text-left"
+              />
+            )}
             <OrderPoller orderCode={order.order_code} expiresAt={expiresAt} />
             <ExpiryCountdown expiresAt={expiresAt} />
             {order.provider === "payos" ? (

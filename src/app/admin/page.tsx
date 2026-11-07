@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AccountGrantSection } from "./AccountGrantSection";
 import { MoneySection } from "./MoneySection";
+import { PauseSection } from "./PauseSection";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SyncDriveButton } from "@/components/SyncDriveButton";
 import { MIN_PASSWORD, formatPhone, localPhone } from "@/lib/account";
@@ -154,13 +155,14 @@ export default async function AdminPage({
     tk?: string;
     ngay?: string;
     msg?: string;
+    tamdung?: string;
   }>;
 }) {
   const viewer = await requireAdmin();
   if (!supabaseConfigured()) {
     return <main className="mx-auto max-w-5xl px-4 py-8 text-muted">Chưa cấu hình Supabase.</main>;
   }
-  const { q = "", matkhau, thumuc, so, thang, tien, captk, tk, ngay, msg } = await searchParams;
+  const { q = "", matkhau, thumuc, so, thang, tien, captk, tk, ngay, msg, tamdung } = await searchParams;
   const admin = createAdminClient();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
@@ -213,6 +215,8 @@ export default async function AdminPage({
   return (
     <main className="allow-select mx-auto max-w-5xl space-y-6 px-4 py-8">
       <h1 className="rounded-lg bg-surface/90 px-4 py-3 text-2xl font-bold tracking-tight text-deep backdrop-blur-sm">Quản trị</h1>
+
+      <PauseSection status={tamdung} />
       {matkhau && PASSWORD_MESSAGES[matkhau] && (
         <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{PASSWORD_MESSAGES[matkhau]}</p>
       )}

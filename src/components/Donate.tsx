@@ -1,4 +1,5 @@
 import { bankAccount, bankQrUrl } from "@/lib/payments";
+import { getPaymentPause } from "@/lib/payment-pause";
 import { DonateDialog } from "./DonateDialog";
 
 /** What a donation's transfer says; banks drop accents, so it is written without. */
@@ -10,10 +11,12 @@ const AMOUNTS = [10_000, 20_000, 50_000, 100_000, null];
  * for a plan payment) that opens a VietQR for the same bank account, with a few amounts or "tuỳ tâm".
  * Any link to #ung-ho (the footer has one) opens it too.
  */
-export function Donate() {
+export async function Donate() {
   const bank = bankAccount();
+  const pause = await getPaymentPause();
   return (
     <DonateDialog
+      pauseMessage={pause?.message ?? null}
       note={DONATE_NOTE}
       bank={{ bank: bank.bank, number: bank.number, name: bank.name }}
       options={AMOUNTS.map((amount) => ({ amount, qr: bankQrUrl(amount, DONATE_NOTE) }))}
